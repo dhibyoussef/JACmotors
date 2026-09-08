@@ -26,9 +26,16 @@ export function HomePage() {
       </section>
 
       <section className="home-strip">
-        <article><strong>105 000 DT</strong><p>Prix indicatif T8 PRO Double Cabine 2.0 L CTI Diesel 4×4 neuve.</p></article>
-        <article><strong>139 ch</strong><p>320 Nm de couple pour travailler, voyager et sortir des sentiers battus.</p></article>
-        <article><strong>4 points</strong><p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p></article>
+        <article><span className="home-strip__label">L’offre signature</span><strong>105 000 DT</strong><p>Prix indicatif du T8 PRO Double Cabine 2.0 L CTI Diesel 4×4 neuve.</p></article>
+        <article><span className="home-strip__label">La puissance utile</span><strong>320 Nm</strong><p>Du couple à bas régime pour travailler, voyager et sortir des sentiers battus.</p></article>
+        <article><span className="home-strip__label">Le réseau local</span><strong>4 points</strong><p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p></article>
+      </section>
+
+      <section className="home-proof">
+        <div className="home-proof__mark">JAC<span>+</span></div>
+        <div><p className="section__eyebrow">Un accompagnement qui continue</p><h2>Du premier regard<br />au dernier kilomètre.</h2></div>
+        <p className="home-proof__copy">Découvrez votre modèle, échangez avec un conseiller et planifiez votre essai dans le réseau JAC Motors Tunisie. Une expérience plus claire, plus directe, plus humaine.</p>
+        <Link className="text-link text-link--light" to="/showrooms">Explorer le réseau <span>↗</span></Link>
       </section>
 
       <section className="section home-intro">
