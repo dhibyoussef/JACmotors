@@ -279,6 +279,11 @@ export function ReservePage() {
           Formulaire sécurisé sans compte : validation des champs, anti-abus,
           consentement, ticket scellé stocké uniquement sur votre appareil.
         </p>
+        <div className="reserve-steps" aria-label="Étapes de réservation">
+          <span className="active"><b>01</b> Vos coordonnées</span>
+          <span><b>02</b> Votre besoin</span>
+          <span><b>03</b> Créneau atelier</span>
+        </div>
       </header>
 
       <section className="section">
