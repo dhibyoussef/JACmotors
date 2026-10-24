@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { Photo360 } from '../components/Photo360'
 import { models } from '../data/content'
 import { CONTACT, MODEL_360_FRAMES, buildShowroomMeetWhatsAppUrl } from '../lib/contact'
+import { QUOTE_PACKAGES, type QuoteModel } from '../lib/quotes'
 
 export function ModelsPage() {
   return (
@@ -50,6 +51,7 @@ export function ModelsPage() {
       <div className="model-detail">
         {models.map((m) => {
           const frames = MODEL_360_FRAMES[m.id as 't8' | 't8pro'] ?? []
+          const quote = QUOTE_PACKAGES[m.name as QuoteModel]
           return (
             <section className="model-panel" key={m.id} id={m.id}>
               <div
@@ -63,7 +65,7 @@ export function ModelsPage() {
                   <div className="model-panel__hero-meta">
                     <span>{m.drive}</span>
                     <span>Double cabine</span>
-                    <span>JAC Motors</span>
+                    {quote && <span className="meta-price">{quote.priceLabel}</span>}
                   </div>
                 </div>
               </div>

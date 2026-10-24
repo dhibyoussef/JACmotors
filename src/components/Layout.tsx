@@ -59,7 +59,7 @@ export function Layout() {
           aria-controls="nav-menu"
           onClick={() => setOpen((v) => !v)}
         >
-          <span className="nav__burger" data-open={open} />
+          <span className={`nav__burger${open ? ' is-open' : ''}`} />
         </button>
 
         <ul id="nav-menu" className={`nav__links ${open ? 'open' : ''}`}>

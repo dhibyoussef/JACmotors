@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { models } from '../data/content'
+import { QUOTE_PACKAGES, type QuoteModel } from '../lib/quotes'
 
 export function HomePage() {
   return (
@@ -7,14 +8,17 @@ export function HomePage() {
       <section className="home-hero">
         <div className="home-hero__media" aria-hidden="true" />
         <div className="home-hero__content">
-          <p className="home-hero__kicker">JAC MOTORS · TUNISIE</p>
+          <p className="home-hero__kicker">
+            <span className="pill-dot" aria-hidden="true" />
+            JAC MOTORS · TUNISIE
+          </p>
           <p className="home-hero__brand">
             T8 <em>PRO</em>
           </p>
           <h1>Le pickup qui prend la route au sérieux.</h1>
           <p className="home-hero__lead">
             4×4 diesel, double cabine et confort premium. Découvrez le JAC T8 PRO,
-            disponible en Tunisie à partir de 105 000 DT.
+            disponible en Tunisie à partir de <strong>105 000 DT</strong>.
           </p>
           <div className="home-hero__actions">
             <Link className="btn btn--primary" to="/modeles#t8pro">
@@ -38,7 +42,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <section className="home-strip">
+      <section className="home-strip" aria-label="Points clés">
         <article>
           <span className="home-strip__label">L’offre signature</span>
           <strong>105 000 DT</strong>
@@ -54,6 +58,45 @@ export function HomePage() {
           <strong>4 points</strong>
           <p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p>
         </article>
+      </section>
+
+      <section className="section journey">
+        <div className="section__head section__head--row">
+          <div>
+            <p className="section__eyebrow">Parcours client</p>
+            <h2 className="section__title">Simple. Clair. WhatsApp.</h2>
+          </div>
+          <p className="section__lead">
+            Trois étapes pour passer de la découverte à un rendez-vous concret avec JAC
+            Motors Tunisie.
+          </p>
+        </div>
+        <ol className="journey__grid">
+          <li>
+            <span>01</span>
+            <h3>Explorez</h3>
+            <p>Comparez T8 &amp; T8 PRO, ouvrez la vue 360° et les fiches techniques.</p>
+            <Link className="text-link" to="/modeles">
+              Voir les modèles <span>↗</span>
+            </Link>
+          </li>
+          <li>
+            <span>02</span>
+            <h3>Demandez un devis</h3>
+            <p>Prix catalogue, specs et financement — message WhatsApp déjà prêt.</p>
+            <Link className="text-link" to="/devis">
+              Ouvrir le devis <span>↗</span>
+            </Link>
+          </li>
+          <li>
+            <span>03</span>
+            <h3>Réservez</h3>
+            <p>Visite showroom ou Google Meet — créneau clair, confirmation rapide.</p>
+            <Link className="text-link" to="/visite">
+              Choisir un créneau <span>↗</span>
+            </Link>
+          </li>
+        </ol>
       </section>
 
       <section className="home-proof">
@@ -87,28 +130,37 @@ export function HomePage() {
           </p>
         </div>
         <div className="model-feature-grid">
-          {models.map((model) => (
-            <article className="model-feature" key={model.id}>
-              <div
-                className="model-feature__image"
-                style={{ backgroundImage: `url(${model.heroImage})` }}
-                role="img"
-                aria-label={`JAC ${model.name}`}
-              >
-                <span>{model.drive}</span>
-              </div>
-              <div className="model-feature__body">
-                <p className="section__eyebrow">
-                  {model.id === 't8pro' ? 'Le choix premium' : 'L’essentiel JAC'}
-                </p>
-                <h3>{model.name}</h3>
-                <p>{model.tagline}</p>
-                <Link className="text-link" to={`/modeles#${model.id}`}>
-                  Voir la fiche <span>↗</span>
-                </Link>
-              </div>
-            </article>
-          ))}
+          {models.map((model) => {
+            const quote = QUOTE_PACKAGES[model.name as QuoteModel]
+            return (
+              <article className="model-feature" key={model.id}>
+                <div
+                  className="model-feature__image"
+                  style={{ backgroundImage: `url(${model.heroImage})` }}
+                  role="img"
+                  aria-label={`JAC ${model.name}`}
+                >
+                  <span>{model.drive}</span>
+                  {quote && <em className="model-feature__price">{quote.priceLabel}</em>}
+                </div>
+                <div className="model-feature__body">
+                  <p className="section__eyebrow">
+                    {model.id === 't8pro' ? 'Le choix premium' : 'L’essentiel JAC'}
+                  </p>
+                  <h3>{model.name}</h3>
+                  <p>{model.tagline}</p>
+                  <div className="model-feature__footer">
+                    <Link className="text-link" to={`/modeles#${model.id}`}>
+                      Voir la fiche <span>↗</span>
+                    </Link>
+                    <Link className="btn btn--outline btn--sm" to="/devis">
+                      Devis
+                    </Link>
+                  </div>
+                </div>
+              </article>
+            )
+          })}
         </div>
       </section>
 
