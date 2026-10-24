@@ -1,9 +1,14 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { showrooms } from '../data/content'
 import {
   CONTACT,
+  buildVisitWhatsAppUrl,
+  formatVisitDate,
+  getVisitDays,
+  getVisitSlots,
   listVisitRequests,
+  openWhatsApp,
   saveVisitRequest,
   type VisitMode,
   type VisitRequest,
@@ -21,23 +26,14 @@ type VisitForm = {
   mode: VisitMode
 }
 
-function defaultVisitDate(): string {
-  const d = new Date()
-  d.setDate(d.getDate() + 1)
-  while (d.getDay() === 0) d.setDate(d.getDate() + 1)
-  return d.toISOString().slice(0, 10)
-}
-
-const visitSlots = ['09:00', '10:00', '11:30', '14:30', '16:00'] as const
-
 const initial: VisitForm = {
   nom: '',
   telephone: '',
   email: '',
   modele: 'T8 PRO',
   showroomId: 'clh',
-  date: defaultVisitDate(),
-  time: '10:00',
+  date: '',
+  time: '',
   mode: 'showroom',
 }
 
@@ -46,10 +42,39 @@ export function VisitPage() {
   const [error, setError] = useState('')
   const [ticket, setTicket] = useState<VisitRequest | null>(null)
   const [history, setHistory] = useState<VisitRequest[]>(() => listVisitRequests())
+  const [sent, setSent] = useState(false)
+
+  const days = useMemo(() => getVisitDays(form.showroomId), [form.showroomId, ticket])
+  const slots = useMemo(
+    () => (form.date ? getVisitSlots(form.showroomId, form.date) : []),
+    [form.showroomId, form.date, ticket],
+  )
+
+  useEffect(() => {
+    if (!days.length) return
+    setForm((prev) => {
+      const stillOk = days.some((d) => d.date === prev.date && d.availableCount > 0)
+      if (stillOk) return prev
+      const first = days.find((d) => d.availableCount > 0) ?? days[0]
+      return { ...prev, date: first.date, time: '' }
+    })
+  }, [days])
+
+  useEffect(() => {
+    if (!form.date) return
+    const open = slots.find((s) => !s.taken)
+    setForm((prev) => {
+      const currentOk = slots.some((s) => s.time === prev.time && !s.taken)
+      if (currentOk) return prev
+      return { ...prev, time: open?.time ?? '' }
+    })
+  }, [form.date, slots])
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
+    setSent(false)
+
     const nom = sanitizeText(form.nom, 80)
     if (nom.length < 2) {
       setError('Indiquez votre nom.')
@@ -60,7 +85,7 @@ export function VisitPage() {
       return
     }
     if (!form.date || !form.time) {
-      setError('Choisissez une date et un créneau.')
+      setError('Choisissez une date et un créneau disponibles.')
       return
     }
     const showroom = showrooms.find((s) => s.id === form.showroomId)
@@ -69,19 +94,25 @@ export function VisitPage() {
       return
     }
 
-    const saved = saveVisitRequest({
-      nom,
-      telephone: form.telephone.trim(),
-      email: sanitizeText(form.email, 120),
-      modele: form.modele,
-      showroomId: showroom.id,
-      showroomName: showroom.name,
-      date: form.date,
-      time: form.time,
-      mode: form.mode,
-    })
-    setTicket(saved)
-    setHistory(listVisitRequests())
+    try {
+      const saved = saveVisitRequest({
+        nom,
+        telephone: form.telephone.trim(),
+        email: sanitizeText(form.email, 120),
+        modele: form.modele,
+        showroomId: showroom.id,
+        showroomName: showroom.name,
+        date: form.date,
+        time: form.time,
+        mode: form.mode,
+      })
+      setTicket(saved)
+      setHistory(listVisitRequests())
+      openWhatsApp(buildVisitWhatsAppUrl(saved))
+      setSent(true)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible d’enregistrer la visite.')
+    }
   }
 
   return (
@@ -90,16 +121,17 @@ export function VisitPage() {
         <div className="page-hero__grid">
           <div>
             <p className="section__eyebrow page-hero__eyebrow">Visite showroom</p>
-            <h1>Venez découvrir le pickup.</h1>
+            <h1>Réservez un créneau clair.</h1>
             <p className="page-hero__lead">
-              Réservez une visite commerciale ou un essai — sur place, ou en
-              visioconférence Google Meet.
+              Choisissez une date disponible, un horaire, puis envoyez la demande sur
+              WhatsApp {CONTACT.whatsappDisplay}. En Meet, le lien est inclus dans le
+              message.
             </p>
           </div>
           <div className="page-hero__aside">
-            <span>Deux façons</span>
-            <strong className="page-hero__aside-phone">Showroom</strong>
-            <p>ou Google Meet avec un conseiller</p>
+            <span>WhatsApp test</span>
+            <strong className="page-hero__aside-phone">{CONTACT.whatsappLabel}</strong>
+            <p>Toutes les demandes arrivent ici</p>
           </div>
         </div>
       </header>
@@ -107,7 +139,9 @@ export function VisitPage() {
       <section className="section commerce">
         {ticket ? (
           <article className="panel panel--ticket">
-            <p className="section__eyebrow">Confirmation</p>
+            <p className="section__eyebrow">
+              {sent ? 'Envoyé vers WhatsApp' : 'Confirmation'}
+            </p>
             <h2>{ticket.id}</h2>
             <dl className="ticket-grid">
               <div>
@@ -125,48 +159,64 @@ export function VisitPage() {
               <div>
                 <dt>Quand</dt>
                 <dd>
-                  {ticket.date} · {ticket.time}
+                  {formatVisitDate(ticket.date)} · {ticket.time}
                 </dd>
               </div>
               <div>
                 <dt>Mode</dt>
                 <dd>
-                  {ticket.mode === 'meet'
-                    ? 'Google Meet'
-                    : 'Sur place en showroom'}
+                  {ticket.mode === 'meet' ? 'Google Meet' : 'Sur place en showroom'}
                 </dd>
               </div>
+              {ticket.mode === 'meet' && ticket.meetUrl && (
+                <div className="ticket-grid__full">
+                  <dt>Lien Meet</dt>
+                  <dd className="ticket-link">{ticket.meetUrl}</dd>
+                </div>
+              )}
             </dl>
 
             {ticket.mode === 'meet' && ticket.meetUrl && (
               <div className="meet-box">
-                <p>{CONTACT.meetNote}</p>
+                <p>
+                  Le lien Meet est dans le message WhatsApp. Rouvrez WhatsApp si besoin,
+                  ou démarrez une vraie réunion.
+                </p>
                 <a
                   className="btn btn--primary"
-                  href={ticket.meetUrl}
+                  href="https://meet.google.com/new"
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Ouvrir Google Meet
+                  Créer une réunion Meet
                 </a>
               </div>
             )}
 
             <div className="panel__actions panel__actions--row">
-              <button type="button" className="btn btn--outline" onClick={() => setTicket(null)}>
-                Nouvelle visite
-              </button>
               <a
                 className="btn btn--whatsapp"
-                href={`https://wa.me/${CONTACT.whatsappE164}?text=${encodeURIComponent(
-                  `Bonjour, je confirme ma visite ${ticket.id} (${ticket.date} ${ticket.time}) pour le JAC ${ticket.modele}.`,
-                )}`}
+                href={buildVisitWhatsAppUrl(ticket)}
                 target="_blank"
                 rel="noreferrer"
               >
-                Confirmer sur WhatsApp
+                Rouvrir WhatsApp
               </a>
+              <button
+                type="button"
+                className="btn btn--outline"
+                onClick={() => {
+                  setTicket(null)
+                  setSent(false)
+                  setForm((f) => ({ ...f, time: '' }))
+                }}
+              >
+                Nouvelle visite
+              </button>
             </div>
+            <p className="form-hint">
+              Sur téléphone, WhatsApp s’ouvre directement. Sur PC, utilisez WhatsApp Web.
+            </p>
           </article>
         ) : (
           <div className="commerce__layout">
@@ -226,7 +276,14 @@ export function VisitPage() {
                   <span>Showroom</span>
                   <select
                     value={form.showroomId}
-                    onChange={(e) => setForm((v) => ({ ...v, showroomId: e.target.value }))}
+                    onChange={(e) =>
+                      setForm((v) => ({
+                        ...v,
+                        showroomId: e.target.value,
+                        date: '',
+                        time: '',
+                      }))
+                    }
                   >
                     {showrooms
                       .filter((s) => s.type !== 'atelier')
@@ -235,29 +292,6 @@ export function VisitPage() {
                           {s.name} — {s.city}
                         </option>
                       ))}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Date</span>
-                  <input
-                    type="date"
-                    required
-                    value={form.date}
-                    min={new Date().toISOString().slice(0, 10)}
-                    onChange={(e) => setForm((v) => ({ ...v, date: e.target.value }))}
-                  />
-                </label>
-                <label className="field">
-                  <span>Créneau</span>
-                  <select
-                    value={form.time}
-                    onChange={(e) => setForm((v) => ({ ...v, time: e.target.value }))}
-                  >
-                    {visitSlots.map((slot) => (
-                      <option key={slot} value={slot}>
-                        {slot}
-                      </option>
-                    ))}
                   </select>
                 </label>
               </div>
@@ -285,32 +319,81 @@ export function VisitPage() {
                   />
                   <span>
                     <strong>Google Meet</strong>
-                    <small>Visioconférence conseiller</small>
+                    <small>Lien Meet envoyé sur WhatsApp</small>
                   </span>
                 </label>
               </fieldset>
 
+              <div className="calendar-block">
+                <div className="calendar-block__head">
+                  <p className="section__eyebrow">Calendrier</p>
+                  <h3>Choisissez une date disponible</h3>
+                  <p>Les dimanches sont fermés. Les créneaux barrés sont déjà pris.</p>
+                </div>
+
+                <div className="date-chip-row" role="listbox" aria-label="Dates disponibles">
+                  {days.map((d) => (
+                    <button
+                      key={d.date}
+                      type="button"
+                      role="option"
+                      aria-selected={form.date === d.date}
+                      className={`date-chip ${form.date === d.date ? 'selected' : ''}`}
+                      disabled={d.availableCount === 0}
+                      onClick={() => setForm((v) => ({ ...v, date: d.date, time: '' }))}
+                    >
+                      <strong>{d.dayName}</strong>
+                      <span>{d.dayNum}</span>
+                      <em>{d.availableCount} libres</em>
+                    </button>
+                  ))}
+                </div>
+
+                {form.date && (
+                  <>
+                    <p className="calendar-block__day">{formatVisitDate(form.date)}</p>
+                    <div className="time-chip-row" role="listbox" aria-label="Créneaux">
+                      {slots.map((s) => (
+                        <button
+                          key={s.time}
+                          type="button"
+                          role="option"
+                          aria-selected={form.time === s.time}
+                          className={`time-chip ${form.time === s.time ? 'selected' : ''}`}
+                          disabled={s.taken}
+                          onClick={() => setForm((v) => ({ ...v, time: s.time }))}
+                        >
+                          {s.time}
+                          {s.taken ? ' · pris' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
               {error && <p className="form-error">{error}</p>}
 
               <div className="panel__actions">
-                <button type="submit" className="btn btn--primary">
-                  Confirmer la visite
+                <button type="submit" className="btn btn--whatsapp" disabled={!form.time}>
+                  Envoyer la visite sur WhatsApp
                 </button>
                 <p className="form-hint">
-                  Après confirmation, vous pouvez prévenir le showroom sur WhatsApp{' '}
-                  {CONTACT.whatsappDisplay}.
+                  {form.mode === 'meet'
+                    ? 'Le message inclura automatiquement le lien Google Meet.'
+                    : `La demande part vers ${CONTACT.whatsappDisplay}.`}
                 </p>
               </div>
             </form>
 
             <aside className="panel panel--aside">
-              <p className="section__eyebrow">Conseil</p>
-              <h3>Préparez votre visite</h3>
+              <p className="section__eyebrow">Comment ça marche</p>
+              <h3>3 étapes simples</h3>
               <ul className="aside-list">
-                <li>Choisissez T8 ou T8 PRO</li>
-                <li>Indiquez un créneau réaliste</li>
-                <li>Sur place : essai & découverte</li>
-                <li>Meet : échange commercial à distance</li>
+                <li>Remplissez vos infos</li>
+                <li>Choisissez date + créneau libre</li>
+                <li>WhatsApp s’ouvre avec le message prêt</li>
+                <li>Meet : le lien est dans le message</li>
               </ul>
               {history.length > 0 && (
                 <div className="history-mini">
@@ -320,7 +403,8 @@ export function VisitPage() {
                       <li key={h.id}>
                         <strong>{h.id}</strong>
                         <span>
-                          {h.modele} · {h.date} · {h.mode === 'meet' ? 'Meet' : 'Showroom'}
+                          {h.modele} · {h.date} {h.time} ·{' '}
+                          {h.mode === 'meet' ? 'Meet' : 'Showroom'}
                         </span>
                       </li>
                     ))}
@@ -331,8 +415,8 @@ export function VisitPage() {
                 <Link className="btn btn--whatsapp" to="/devis">
                   Demander un devis
                 </Link>
-                <Link className="btn btn--outline" to="/showrooms">
-                  Voir les showrooms
+                <Link className="btn btn--outline" to="/modeles">
+                  Voir en 360°
                 </Link>
               </div>
             </aside>

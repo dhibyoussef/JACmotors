@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Props = {
   frames: string[]
@@ -7,6 +7,8 @@ type Props = {
 
 export function Photo360({ frames, label }: Props) {
   const [index, setIndex] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const stageRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ active: boolean; x: number; startIndex: number }>({
     active: false,
     x: 0,
@@ -16,24 +18,48 @@ export function Photo360({ frames, label }: Props) {
   const clampIndex = useCallback(
     (value: number) => {
       const n = frames.length
+      if (n === 0) return 0
       return ((value % n) + n) % n
     },
     [frames.length],
   )
 
-  const onPointerDown = (clientX: number) => {
+  useEffect(() => {
+    frames.forEach((src) => {
+      const img = new Image()
+      img.src = src
+    })
+  }, [frames])
+
+  useEffect(() => {
+    setIndex(0)
+  }, [frames])
+
+  const onPointerDown = (clientX: number, pointerId?: number) => {
     drag.current = { active: true, x: clientX, startIndex: index }
+    setDragging(true)
+    if (pointerId != null) {
+      stageRef.current?.setPointerCapture?.(pointerId)
+    }
   }
 
   const onPointerMove = (clientX: number) => {
     if (!drag.current.active || frames.length < 2) return
     const delta = clientX - drag.current.x
-    const steps = Math.round(delta / 28)
+    const steps = Math.round(delta / 24)
     setIndex(clampIndex(drag.current.startIndex - steps))
   }
 
-  const onPointerUp = () => {
+  const onPointerUp = (pointerId?: number) => {
     drag.current.active = false
+    setDragging(false)
+    if (pointerId != null) {
+      try {
+        stageRef.current?.releasePointerCapture?.(pointerId)
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   if (frames.length === 0) {
@@ -43,16 +69,22 @@ export function Photo360({ frames, label }: Props) {
   return (
     <div className="photo360">
       <div
-        className="photo360__stage"
+        ref={stageRef}
+        className={`photo360__stage ${dragging ? 'is-dragging' : ''}`}
         role="img"
         aria-label={`${label} — vue interactive, image ${index + 1} sur ${frames.length}`}
-        onMouseDown={(e) => onPointerDown(e.clientX)}
-        onMouseMove={(e) => onPointerMove(e.clientX)}
-        onMouseUp={onPointerUp}
-        onMouseLeave={onPointerUp}
-        onTouchStart={(e) => onPointerDown(e.touches[0].clientX)}
-        onTouchMove={(e) => onPointerMove(e.touches[0].clientX)}
-        onTouchEnd={onPointerUp}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'ArrowLeft') setIndex((i) => clampIndex(i - 1))
+          if (e.key === 'ArrowRight') setIndex((i) => clampIndex(i + 1))
+        }}
+        onPointerDown={(e) => {
+          e.preventDefault()
+          onPointerDown(e.clientX, e.pointerId)
+        }}
+        onPointerMove={(e) => onPointerMove(e.clientX)}
+        onPointerUp={(e) => onPointerUp(e.pointerId)}
+        onPointerCancel={(e) => onPointerUp(e.pointerId)}
       >
         <img src={frames[index]} alt={`${label} — angle ${index + 1}`} draggable={false} />
         <div className="photo360__hint">
@@ -77,7 +109,8 @@ export function Photo360({ frames, label }: Props) {
         </button>
       </div>
       <p className="photo360__note">
-        Glissez horizontalement pour explorer le véhicule sous plusieurs angles.
+        Glissez, utilisez les boutons, ou les flèches du clavier pour tourner autour du
+        véhicule.
       </p>
     </div>
   )
