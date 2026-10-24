@@ -87,14 +87,14 @@ export function DevisPage() {
             <p className="section__eyebrow page-hero__eyebrow">Devis WhatsApp</p>
             <h1>Remplissez, envoyez, c’est parti.</h1>
             <p className="page-hero__lead">
-              Le formulaire prépare le message. En cliquant sur envoyer, WhatsApp s’ouvre
-              vers {CONTACT.whatsappDisplay} avec votre demande déjà écrite.
+              Le formulaire prépare un devis professionnel avec prix, specs et options.
+              WhatsApp s’ouvre vers {CONTACT.whatsappDisplay} — il ne reste qu’à envoyer.
             </p>
           </div>
           <div className="page-hero__aside">
-            <span>Ligne WhatsApp test</span>
+            <span>Ligne WhatsApp</span>
             <strong className="page-hero__aside-phone">{CONTACT.whatsappLabel}</strong>
-            <p>{CONTACT.whatsappDisplay}</p>
+            <p>{CONTACT.whatsappDisplay} · devis &amp; réponses clients</p>
           </div>
         </div>
       </header>
@@ -253,11 +253,14 @@ export function DevisPage() {
               </div>
             </form>
 
-            <aside className="panel panel--aside">
+            <aside className="panel panel--aside quote-card">
               <p className="section__eyebrow">Aperçu devis</p>
               <h3>JAC {form.modele}</h3>
-              <p className="aside-price">{quote.priceLabel}</p>
-              <p className="form-hint">{quote.version}</p>
+              <div className="quote-card__price">
+                <span>Prix catalogue</span>
+                <strong>{quote.priceLabel}</strong>
+              </div>
+              <p className="quote-card__version">{quote.version}</p>
               <ul className="aside-list">
                 <li>Prix catalogue inclus dans le message</li>
                 <li>Specs + points forts</li>
@@ -274,7 +277,7 @@ export function DevisPage() {
                 <Link className="btn btn--primary" to="/visite">
                   Réserver une visite
                 </Link>
-                <Link className="btn btn--outline" to="/modeles">
+                <Link className="btn btn--ghost-dark" to="/modeles">
                   Voir les modèles 360°
                 </Link>
               </div>

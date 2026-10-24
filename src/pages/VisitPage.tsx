@@ -151,7 +151,7 @@ export function VisitPage() {
             </p>
           </div>
           <div className="page-hero__aside">
-            <span>WhatsApp test</span>
+            <span>Ligne WhatsApp</span>
             <strong className="page-hero__aside-phone">{CONTACT.whatsappLabel}</strong>
             <p>Toutes les demandes arrivent ici</p>
           </div>
@@ -441,10 +441,10 @@ export function VisitPage() {
                 </div>
               )}
               <div className="aside-stack">
-                <Link className="btn btn--whatsapp" to="/devis">
+                <Link className="btn btn--primary" to="/devis">
                   Demander un devis
                 </Link>
-                <Link className="btn btn--outline" to="/modeles">
+                <Link className="btn btn--ghost-dark" to="/modeles">
                   Voir en 360°
                 </Link>
               </div>

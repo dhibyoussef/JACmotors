@@ -160,14 +160,14 @@ export const models: CarModel[] = [
       'Pickup double cabine robuste — versions 4×2 et 4×4 pour le travail et la route tunisienne.',
     drive: '4×2 / 4×4',
     highlight: 'Gamme pickup · JAC Tunisie',
-    heroImage: '/images/jac/t8-b.jpg',
+    heroImage: '/images/jac/t8-a.jpg',
     gallery: [
-      '/images/jac/t8-b.jpg',
       '/images/jac/t8-a.jpg',
       '/images/jac/t8-c.jpg',
       '/images/jac/t8-d.jpg',
       '/images/jac/t8-e.jpg',
       '/images/jac/t8-f.jpg',
+      '/images/jac/t8-b.jpg',
     ],
     engines: [
       {
