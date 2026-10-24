@@ -20,11 +20,11 @@ export function HomePage() {
             <Link className="btn btn--primary" to="/modeles#t8pro">
               Découvrir le T8 PRO
             </Link>
-            <Link className="btn btn--ghost" to="/visite">
-              Réserver une visite
-            </Link>
             <Link className="btn btn--whatsapp" to="/devis">
               Devis WhatsApp
+            </Link>
+            <Link className="btn btn--ghost home-hero__action-secondary" to="/visite">
+              Réserver une visite
             </Link>
           </div>
           <div className="hero-trust">

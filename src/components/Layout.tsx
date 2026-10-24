@@ -7,7 +7,11 @@ export function Layout() {
   const [solid, setSolid] = useState(false)
   const location = useLocation()
   const isHome = location.pathname === '/'
-  const hideFab = location.pathname === '/devis' || location.pathname === '/visite'
+  /** Hide FAB on pages that already have a primary WhatsApp send CTA */
+  const hideFab =
+    location.pathname === '/devis' ||
+    location.pathname === '/visite' ||
+    location.pathname === '/'
 
   useEffect(() => {
     setOpen(false)
