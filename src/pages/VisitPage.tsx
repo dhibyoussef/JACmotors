@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { showrooms } from '../data/content'
 import {
   CONTACT,
@@ -38,7 +38,16 @@ const initial: VisitForm = {
 }
 
 export function VisitPage() {
-  const [form, setForm] = useState<VisitForm>(initial)
+  const [searchParams] = useSearchParams()
+  const [form, setForm] = useState<VisitForm>(() => {
+    const modeParam = searchParams.get('mode')
+    const modeleParam = searchParams.get('modele')
+    return {
+      ...initial,
+      mode: modeParam === 'meet' ? 'meet' : 'showroom',
+      modele: modeleParam === 'T8' || modeleParam === 'T8 PRO' ? modeleParam : 'T8 PRO',
+    }
+  })
   const [error, setError] = useState('')
   const [ticket, setTicket] = useState<VisitRequest | null>(null)
   const [history, setHistory] = useState<VisitRequest[]>(() => listVisitRequests())
@@ -49,6 +58,17 @@ export function VisitPage() {
     () => (form.date ? getVisitSlots(form.showroomId, form.date) : []),
     [form.showroomId, form.date, ticket],
   )
+
+  useEffect(() => {
+    const modeParam = searchParams.get('mode')
+    const modeleParam = searchParams.get('modele')
+    setForm((prev) => ({
+      ...prev,
+      mode: modeParam === 'meet' ? 'meet' : prev.mode,
+      modele:
+        modeleParam === 'T8' || modeleParam === 'T8 PRO' ? modeleParam : prev.modele,
+    }))
+  }, [searchParams])
 
   useEffect(() => {
     if (!days.length) return
@@ -123,9 +143,8 @@ export function VisitPage() {
             <p className="section__eyebrow page-hero__eyebrow">Visite showroom</p>
             <h1>Réservez un créneau clair.</h1>
             <p className="page-hero__lead">
-              Choisissez une date disponible, un horaire, puis envoyez la demande sur
-              WhatsApp {CONTACT.whatsappDisplay}. En Meet, le lien est inclus dans le
-              message.
+              Sur place, ou en Google Meet pour découvrir les showrooms à distance après
+              la vue 360°. La demande part sur WhatsApp {CONTACT.whatsappDisplay}.
             </p>
           </div>
           <div className="page-hero__aside">
@@ -319,7 +338,7 @@ export function VisitPage() {
                   />
                   <span>
                     <strong>Google Meet</strong>
-                    <small>Lien Meet envoyé sur WhatsApp</small>
+                    <small>Voir / découvrir les showrooms en vidéo</small>
                   </span>
                 </label>
               </fieldset>

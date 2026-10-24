@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Photo360 } from '../components/Photo360'
 import { models } from '../data/content'
-import { MODEL_360_FRAMES } from '../lib/contact'
+import { CONTACT, MODEL_360_FRAMES, buildShowroomMeetWhatsAppUrl } from '../lib/contact'
 
 export function ModelsPage() {
   return (
@@ -81,12 +81,40 @@ export function ModelsPage() {
                   <div className="model-360-block">
                     <div className="model-360-block__head">
                       <div>
-                        <p className="section__eyebrow">Vue interactive</p>
+                        <p className="section__eyebrow">Vue 360° + showroom</p>
                         <h3>Explorez le JAC {m.name} en 360°</h3>
                       </div>
-                      <p>Glissez pour tourner autour du véhicule.</p>
+                      <p>
+                        Ensuite, demandez un Google Meet pour découvrir les showrooms
+                        avec un conseiller.
+                      </p>
                     </div>
                     <Photo360 frames={frames} label={`JAC ${m.name}`} />
+                    <div className="model-360-cta">
+                      <div>
+                        <strong>Envie de voir le showroom en vrai (ou en vidéo) ?</strong>
+                        <p>
+                          Réservez un Google Meet — le lien part sur WhatsApp{' '}
+                          {CONTACT.whatsappLabel}.
+                        </p>
+                      </div>
+                      <div className="model-360-cta__actions">
+                        <Link
+                          className="btn btn--primary"
+                          to={`/visite?mode=meet&modele=${encodeURIComponent(m.name)}`}
+                        >
+                          Meet pour voir le showroom
+                        </Link>
+                        <a
+                          className="btn btn--whatsapp"
+                          href={buildShowroomMeetWhatsAppUrl(m.name as 'T8' | 'T8 PRO')}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          Demander le Meet sur WhatsApp
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 )}
 

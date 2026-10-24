@@ -46,6 +46,17 @@ export function quickWhatsAppUrl(message?: string): string {
   ])
 }
 
+/** From the 360° viewer — ask for a Google Meet to discover showrooms */
+export function buildShowroomMeetWhatsAppUrl(modele: 'T8' | 'T8 PRO'): string {
+  return waUrl([
+    'Bonjour JAC Motors Tunisie 👋',
+    `Je viens de voir le JAC ${modele} en 360° sur le site.`,
+    'Je souhaite un Google Meet pour découvrir / visiter les showrooms à distance.',
+    '',
+    'Merci de me proposer un créneau et le lien Meet.',
+  ])
+}
+
 export type VisitMode = 'showroom' | 'meet'
 
 export type VisitRequest = {
@@ -91,11 +102,15 @@ export function meetUrlFromId(id: string): string {
 export function buildVisitWhatsAppUrl(visit: VisitRequest): string {
   const when = formatVisitDate(visit.date)
   const modeLabel =
-    visit.mode === 'meet' ? 'Google Meet (visioconférence)' : 'Sur place en showroom'
+    visit.mode === 'meet'
+      ? 'Google Meet — découvrir / voir les showrooms à distance'
+      : 'Sur place en showroom'
 
   return waUrl([
     'Bonjour JAC Motors Tunisie 👋',
-    'Je réserve une visite :',
+    visit.mode === 'meet'
+      ? 'Je souhaite un Google Meet pour voir les showrooms :'
+      : 'Je réserve une visite showroom :',
     `• Réf. : ${visit.id}`,
     `• Nom : ${visit.nom}`,
     `• Téléphone : ${visit.telephone}`,

@@ -162,4 +162,19 @@ test('Tunisian phone acceptance pattern', () => {
   assert.equal(ok('123'), false)
 })
 
+test('360 showroom Meet WhatsApp asks to see showrooms', () => {
+  const url = waUrl([
+    'Bonjour JAC Motors Tunisie 👋',
+    'Je viens de voir le JAC T8 PRO en 360° sur le site.',
+    'Je souhaite un Google Meet pour découvrir / visiter les showrooms à distance.',
+    '',
+    'Merci de me proposer un créneau et le lien Meet.',
+  ])
+  assert.ok(url.includes('21699757218'))
+  const text = decodeURIComponent(url.split('text=')[1])
+  assert.match(text, /360/)
+  assert.match(text, /Google Meet/)
+  assert.match(text, /showrooms/)
+})
+
 console.log(`\n${passed} smoke tests passed`)

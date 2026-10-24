@@ -2020,8 +2020,54 @@ p {
 
 .model-360-block__head > p {
   color: var(--steel);
-  max-width: 28ch;
+  max-width: 34ch;
   font-size: 0.92rem;
+}
+
+.model-360-cta {
+  margin-top: 1.1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--white);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.model-360-cta strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.model-360-cta p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.9rem;
+  max-width: 42ch;
+}
+
+.model-360-cta__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: flex-end;
+}
+
+@media (max-width: 860px) {
+  .model-360-cta {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .model-360-cta__actions {
+    justify-content: stretch;
+  }
+
+  .model-360-cta__actions .btn {
+    width: 100%;
+  }
 }
 
 .photo360__stage {
