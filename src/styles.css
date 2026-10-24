@@ -970,6 +970,52 @@ p {
   cursor: grabbing;
 }
 
+.reply-box {
+  margin: 1.35rem 0 1rem;
+  padding: 1.1rem 1.15rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #fff, var(--paper));
+}
+
+.reply-box__head h3 {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  letter-spacing: 0.04em;
+  margin: 0.2rem 0 0.35rem;
+}
+
+.reply-box__head p:last-child {
+  color: var(--steel);
+  font-size: 0.9rem;
+  margin-bottom: 0.85rem;
+}
+
+.reply-box__text {
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.92);
+  border-radius: 6px;
+  white-space: pre-wrap;
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  overflow-x: auto;
+}
+
+.reply-box__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+@media (max-width: 720px) {
+  .reply-box__actions .btn {
+    width: 100%;
+  }
+}
+
 .aside-panel {
   background: var(--ink);
   color: var(--white);

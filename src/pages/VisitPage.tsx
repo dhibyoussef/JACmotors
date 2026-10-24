@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { ReplyBox } from '../components/ReplyBox'
 import { showrooms } from '../data/content'
 import {
   CONTACT,
+  buildVisitReplyText,
+  buildVisitReplyWhatsAppUrl,
   buildVisitWhatsAppUrl,
   formatVisitDate,
   getVisitDays,
@@ -212,6 +215,13 @@ export function VisitPage() {
               </div>
             )}
 
+            <ReplyBox
+              title="Réponse à envoyer au client"
+              replyText={buildVisitReplyText(ticket)}
+              replyWhatsAppUrl={buildVisitReplyWhatsAppUrl(ticket)}
+              clientLabel={ticket.telephone}
+            />
+
             <div className="panel__actions panel__actions--row">
               <a
                 className="btn btn--whatsapp"
@@ -219,7 +229,7 @@ export function VisitPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Rouvrir WhatsApp
+                Rouvrir la demande
               </a>
               <button
                 type="button"
@@ -234,7 +244,7 @@ export function VisitPage() {
               </button>
             </div>
             <p className="form-hint">
-              Sur téléphone, WhatsApp s’ouvre directement. Sur PC, utilisez WhatsApp Web.
+              1) Le client envoie la demande → 2) Vous renvoyez la réponse suggérée.
             </p>
           </article>
         ) : (

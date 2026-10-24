@@ -19,11 +19,21 @@ export type DevisInput = {
   besoin: string
 }
 
-function waUrl(lines: Array<string | null | undefined>): string {
+function toWhatsAppE164(phone: string): string | null {
+  const digits = phone.replace(/\D/g, '')
+  if (/^216\d{8}$/.test(digits)) return digits
+  if (/^[2-9]\d{7}$/.test(digits)) return `216${digits}`
+  return null
+}
+
+function waUrl(
+  lines: Array<string | null | undefined>,
+  toE164: string = CONTACT.whatsappE164,
+): string {
   const text = encodeURIComponent(
     lines.filter((line): line is string => line != null && line !== '').join('\n'),
   )
-  return `https://wa.me/${CONTACT.whatsappE164}?text=${text}`
+  return `https://wa.me/${toE164}?text=${text}`
 }
 
 export function buildDevisWhatsAppUrl(input: DevisInput): string {
@@ -38,6 +48,37 @@ export function buildDevisWhatsAppUrl(input: DevisInput): string {
     '',
     'Merci de me recontacter.',
   ])
+}
+
+/** Suggested dealer reply to a devis request (send back to the client) */
+export function buildDevisReplyText(input: DevisInput): string {
+  const firstName = input.nom.trim().split(/\s+/)[0] || input.nom.trim()
+  return [
+    `Bonjour ${firstName} 👋`,
+    '',
+    `Merci pour votre demande de devis concernant le JAC ${input.modele}.`,
+    '',
+    'Nous avons bien reçu vos informations :',
+    `• Showroom : ${input.showroom}`,
+    `• Besoin : ${input.besoin.trim()}`,
+    `• Téléphone : ${input.telephone.trim()}`,
+    '',
+    'Un conseiller JAC Motors Tunisie vous recontacte très rapidement avec le devis, les disponibilités et les options.',
+    '',
+    'En attendant, vous pouvez aussi :',
+    '• Réserver une visite showroom',
+    '• Demander un Google Meet pour découvrir le showroom à distance',
+    '',
+    'À très bientôt,',
+    'JAC Motors Tunisie',
+    `WhatsApp : ${CONTACT.whatsappDisplay}`,
+  ].join('\n')
+}
+
+export function buildDevisReplyWhatsAppUrl(input: DevisInput): string | null {
+  const client = toWhatsAppE164(input.telephone)
+  if (!client) return null
+  return waUrl(buildDevisReplyText(input).split('\n'), client)
 }
 
 export function quickWhatsAppUrl(message?: string): string {
@@ -135,6 +176,58 @@ export function formatVisitDate(iso: string): string {
     day: 'numeric',
     month: 'long',
   })
+}
+
+/** Suggested dealer reply to a visit / Meet request */
+export function buildVisitReplyText(visit: VisitRequest): string {
+  const firstName = visit.nom.trim().split(/\s+/)[0] || visit.nom.trim()
+  const when = formatVisitDate(visit.date)
+
+  if (visit.mode === 'meet') {
+    return [
+      `Bonjour ${firstName} 👋`,
+      '',
+      `Merci pour votre demande de Google Meet concernant le JAC ${visit.modele}.`,
+      '',
+      'Voici la confirmation proposée :',
+      `• Showroom : ${visit.showroomName}`,
+      `• Date : ${when}`,
+      `• Heure : ${visit.time}`,
+      visit.meetUrl ? `• Lien Google Meet : ${visit.meetUrl}` : null,
+      '',
+      'Nous confirmons le créneau et restons disponibles sur WhatsApp pour tout ajustement.',
+      '',
+      'À bientôt,',
+      'JAC Motors Tunisie',
+      `WhatsApp : ${CONTACT.whatsappDisplay}`,
+    ]
+      .filter((line): line is string => line != null)
+      .join('\n')
+  }
+
+  return [
+    `Bonjour ${firstName} 👋`,
+    '',
+    `Merci pour votre demande de visite showroom concernant le JAC ${visit.modele}.`,
+    '',
+    'Voici la confirmation proposée :',
+    `• Showroom : ${visit.showroomName}`,
+    `• Date : ${when}`,
+    `• Heure : ${visit.time}`,
+    `• Réf. : ${visit.id}`,
+    '',
+    'Nous vous attendons volontiers. Un conseiller confirmera le créneau rapidement.',
+    '',
+    'À bientôt,',
+    'JAC Motors Tunisie',
+    `WhatsApp : ${CONTACT.whatsappDisplay}`,
+  ].join('\n')
+}
+
+export function buildVisitReplyWhatsAppUrl(visit: VisitRequest): string | null {
+  const client = toWhatsAppE164(visit.telephone)
+  if (!client) return null
+  return waUrl(buildVisitReplyText(visit).split('\n'), client)
 }
 
 export type VisitDay = {

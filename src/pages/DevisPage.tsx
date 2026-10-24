@@ -1,8 +1,11 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { ReplyBox } from '../components/ReplyBox'
 import { models, showrooms } from '../data/content'
 import {
   CONTACT,
+  buildDevisReplyText,
+  buildDevisReplyWhatsAppUrl,
   buildDevisWhatsAppUrl,
   openWhatsApp,
   type DevisInput,
@@ -108,6 +111,13 @@ export function DevisPage() {
                 <dd>{sent.besoin}</dd>
               </div>
             </dl>
+            <ReplyBox
+              title="Réponse à envoyer au client"
+              replyText={buildDevisReplyText(sent)}
+              replyWhatsAppUrl={buildDevisReplyWhatsAppUrl(sent)}
+              clientLabel={sent.telephone}
+            />
+
             <div className="panel__actions panel__actions--row">
               <a
                 className="btn btn--whatsapp"
@@ -115,7 +125,7 @@ export function DevisPage() {
                 target="_blank"
                 rel="noreferrer"
               >
-                Rouvrir WhatsApp
+                Rouvrir la demande
               </a>
               <button type="button" className="btn btn--outline" onClick={() => setSent(null)}>
                 Nouveau devis
@@ -125,8 +135,7 @@ export function DevisPage() {
               </Link>
             </div>
             <p className="form-hint">
-              Appuyez sur <strong>Envoyer</strong> dans WhatsApp pour que le message
-              arrive sur {CONTACT.whatsappDisplay}.
+              1) Le client envoie la demande → 2) Vous renvoyez la réponse suggérée ci-dessus.
             </p>
           </article>
         ) : (

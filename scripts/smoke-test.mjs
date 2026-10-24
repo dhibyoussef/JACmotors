@@ -177,4 +177,26 @@ test('360 showroom Meet WhatsApp asks to see showrooms', () => {
   assert.match(text, /showrooms/)
 })
 
+test('Dealer reply to devis is personalized', () => {
+  const reply = [
+    'Bonjour Youssef 👋',
+    '',
+    'Merci pour votre demande de devis concernant le JAC T8.',
+    '',
+    'Nous avons bien reçu vos informations :',
+    '• Showroom : SHOWROOM CLH MOTORS',
+    '• Besoin : Devis véhicule neuf',
+    '• Téléphone : +21699757218',
+    '',
+    'Un conseiller JAC Motors Tunisie vous recontacte très rapidement avec le devis, les disponibilités et les options.',
+    '',
+    'À très bientôt,',
+    'JAC Motors Tunisie',
+  ].join('\n')
+  assert.match(reply, /Bonjour Youssef/)
+  assert.match(reply, /JAC T8/)
+  assert.match(reply, /SHOWROOM CLH MOTORS/)
+  assert.match(reply, /Devis véhicule neuf/)
+})
+
 console.log(`\n${passed} smoke tests passed`)
