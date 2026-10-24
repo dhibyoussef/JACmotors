@@ -1,3 +1,11 @@
+import {
+  QUOTE_PACKAGES,
+  devisRef,
+  formatDt,
+  wantsFinancing,
+  type QuoteModel,
+} from './quotes'
+
 /** Commercial contact, WhatsApp messages & visit calendar */
 
 export const CONTACT = {
@@ -5,6 +13,7 @@ export const CONTACT = {
   whatsappE164: '21699757218',
   whatsappLabel: '99 757 218',
   whatsappDisplay: '+216 99 757 218',
+  siteUrl: 'https://jacmotors-two.vercel.app',
   meetNote:
     'Le lien Google Meet est inclus dans le message WhatsApp. Ouvrez WhatsApp pour l’envoyer / le recevoir.',
 } as const
@@ -12,7 +21,7 @@ export const CONTACT = {
 export const VISIT_SLOTS = ['09:00', '10:00', '11:30', '14:30', '16:00'] as const
 
 export type DevisInput = {
-  modele: 'T8' | 'T8 PRO'
+  modele: QuoteModel
   showroom: string
   nom: string
   telephone: string
@@ -36,43 +45,140 @@ function waUrl(
   return `https://wa.me/${toE164}?text=${text}`
 }
 
-export function buildDevisWhatsAppUrl(input: DevisInput): string {
-  return waUrl([
-    'Bonjour JAC Motors Tunisie 👋',
-    'Je souhaite un devis :',
-    `• Modèle : JAC ${input.modele}`,
-    `• Showroom : ${input.showroom}`,
-    `• Nom : ${input.nom.trim()}`,
-    `• Téléphone : ${input.telephone.trim()}`,
-    `• Besoin : ${input.besoin.trim()}`,
-    '',
-    'Merci de me recontacter.',
-  ])
+function pack(modele: QuoteModel) {
+  return QUOTE_PACKAGES[modele]
 }
 
-/** Suggested dealer reply to a devis request (send back to the client) */
-export function buildDevisReplyText(input: DevisInput): string {
-  const firstName = input.nom.trim().split(/\s+/)[0] || input.nom.trim()
+/** Client → dealer : structured devis request */
+export function buildDevisRequestText(input: DevisInput): string {
+  const q = pack(input.modele)
   return [
-    `Bonjour ${firstName} 👋`,
+    '*JAC MOTORS TUNISIE*',
+    '────────────────',
+    '*DEMANDE DE DEVIS*',
     '',
-    `Merci pour votre demande de devis concernant le JAC ${input.modele}.`,
+    'Bonjour JAC Motors Tunisie,',
+    'Je souhaite recevoir un *devis détaillé avec prix* :',
     '',
-    'Nous avons bien reçu vos informations :',
+    '*Client*',
+    `• Nom : ${input.nom.trim()}`,
+    `• Téléphone : ${input.telephone.trim()}`,
+    `• Showroom : ${input.showroom}`,
+    `• Besoin : ${input.besoin.trim()}`,
+    '',
+    '*Véhicule demandé*',
+    `• Modèle : *JAC ${input.modele}*`,
+    `• Version : ${q.version}`,
+    `• Transmission : ${q.drive}`,
+    `• Motorisation : ${q.engine}`,
+    `• Prix catalogue indicatif : *${q.priceLabel}*`,
+    '',
+    'Merci de me renvoyer le devis complet (prix, options, disponibilité' +
+      (wantsFinancing(input.besoin) ? ', financement' : '') +
+      ').',
+  ].join('\n')
+}
+
+export function buildDevisWhatsAppUrl(input: DevisInput): string {
+  return waUrl(buildDevisRequestText(input).split('\n'))
+}
+
+/**
+ * Dealer → client : professional indicative quote (price, specs, financing, next steps)
+ * WhatsApp formatting: *bold*
+ */
+export function buildDevisReplyText(input: DevisInput, ref = devisRef()): string {
+  const firstName = input.nom.trim().split(/\s+/)[0] || input.nom.trim()
+  const q = pack(input.modele)
+  const financing = wantsFinancing(input.besoin)
+  let section = 1
+
+  const lines: Array<string | null> = [
+    '*JAC MOTORS TUNISIE*',
+    '────────────────',
+    '*DEVIS PROFESSIONNEL*',
+    `Réf. : *${ref}*`,
+    `Date : ${new Date().toLocaleDateString('fr-TN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    })}`,
+    '',
+    `Bonjour *${firstName}*,`,
+    '',
+    `Merci pour votre demande. Voici votre *devis indicatif complet* pour le *JAC ${input.modele}* :`,
+    '',
+    `*${section++}) Véhicule*`,
+    `• Marque : JAC Motors`,
+    `• Modèle : *JAC ${input.modele}*`,
+    `• Version : ${q.version}`,
+    `• Transmission : ${q.drive}`,
+    `• Motorisation : ${q.engine}`,
+    `• État : Véhicule neuf`,
+    '',
+    `*${section++}) Prix Tunisie*`,
+    `• Prix catalogue : *${q.priceLabel}*`,
+    `• Montant de référence : *${formatDt(q.priceFromDt)}*`,
+    '• Devise : Dinars tunisiens (DT)',
+    '• Hors options / accessoires / frais éventuels',
+    `• Disponibilité : ${q.availability}`,
+    `• Garantie : ${q.warranty}`,
+    '',
+    `*${section++}) Inclus dans l’offre*`,
+    ...q.included.map((item) => `• ${item}`),
+    '',
+    `*${section++}) Points forts*`,
+    ...q.highlights.map((h) => `• ${h}`),
+    '',
+    `*${section++}) Caractéristiques techniques*`,
+    ...q.specs.map((s) => `• ${s}`),
+    '',
+    `*${section++}) Votre dossier*`,
     `• Showroom : ${input.showroom}`,
     `• Besoin : ${input.besoin.trim()}`,
     `• Téléphone : ${input.telephone.trim()}`,
+    `• Client : ${input.nom.trim()}`,
+  ]
+
+  if (financing) {
+    lines.push(
+      '',
+      `*${section++}) Financement (exemples indicatifs)*`,
+      `• Prix de référence : *${formatDt(q.priceFromDt)}*`,
+      ...q.financingExamples.map(
+        (ex) =>
+          `• Ex. apport ~${ex.apportPct}% · ${ex.durationMonths} mois → *~${formatDt(ex.monthlyFromDt)}/mois*`,
+      ),
+      '• Étude de dossier personnalisée en showroom',
+      '• Apport, durée et mensualité selon profil & organisme',
+      '• Simulation définitive avec le conseiller',
+    )
+  }
+
+  lines.push(
     '',
-    'Un conseiller JAC Motors Tunisie vous recontacte très rapidement avec le devis, les disponibilités et les options.',
+    `*${section++}) Prochaines étapes*`,
+    '1. Confirmer ce devis avec un conseiller JAC',
+    '2. Réserver une visite showroom ou un Google Meet',
+    '3. Choisir options / couleur / équipements',
+    '4. Finaliser commande ou financement en showroom',
     '',
-    'En attendant, vous pouvez aussi :',
-    '• Réserver une visite showroom',
-    '• Demander un Google Meet pour découvrir le showroom à distance',
+    '*Liens utiles*',
+    `• Site : ${CONTACT.siteUrl}`,
+    `• Demande devis : ${CONTACT.siteUrl}/devis`,
+    `• Modèles 360° : ${CONTACT.siteUrl}/modeles`,
+    `• Visite / Meet : ${CONTACT.siteUrl}/visite`,
     '',
-    'À très bientôt,',
-    'JAC Motors Tunisie',
+    `*Note* : ${q.note}`,
+    '*Validité* : 7 jours',
+    '*Mention* : devis indicatif, non contractuel — prix, options et stock à confirmer en showroom.',
+    '',
+    'Restant à votre disposition,',
+    '*JAC Motors Tunisie*',
     `WhatsApp : ${CONTACT.whatsappDisplay}`,
-  ].join('\n')
+  )
+
+  return lines.filter((l): l is string => l != null).join('\n')
 }
 
 export function buildDevisReplyWhatsAppUrl(input: DevisInput): string | null {
@@ -142,26 +248,36 @@ export function meetUrlFromId(id: string): string {
 
 export function buildVisitWhatsAppUrl(visit: VisitRequest): string {
   const when = formatVisitDate(visit.date)
-  const modeLabel =
-    visit.mode === 'meet'
-      ? 'Google Meet — découvrir / voir les showrooms à distance'
-      : 'Sur place en showroom'
+  const q = pack(visit.modele)
+  const isMeet = visit.mode === 'meet'
 
   return waUrl([
-    'Bonjour JAC Motors Tunisie 👋',
-    visit.mode === 'meet'
-      ? 'Je souhaite un Google Meet pour voir les showrooms :'
-      : 'Je réserve une visite showroom :',
-    `• Réf. : ${visit.id}`,
+    '*JAC MOTORS TUNISIE*',
+    '────────────────',
+    isMeet ? '*DEMANDE GOOGLE MEET — SHOWROOM*' : '*DEMANDE DE VISITE SHOWROOM*',
+    '',
+    'Bonjour JAC Motors Tunisie,',
+    isMeet
+      ? 'Je souhaite un Google Meet pour découvrir les showrooms :'
+      : 'Je souhaite réserver une visite showroom :',
+    '',
+    '*Réservation*',
+    `• Réf. : *${visit.id}*`,
+    `• Date : *${when}*`,
+    `• Heure : *${visit.time}*`,
+    `• Mode : ${isMeet ? 'Google Meet (visioconférence)' : 'Sur place en showroom'}`,
+    isMeet && visit.meetUrl ? `• Lien Meet proposé : ${visit.meetUrl}` : null,
+    '',
+    '*Client*',
     `• Nom : ${visit.nom}`,
     `• Téléphone : ${visit.telephone}`,
     visit.email ? `• Email : ${visit.email}` : null,
-    `• Modèle : JAC ${visit.modele}`,
+    '',
+    '*Véhicule & showroom*',
+    `• Modèle : *JAC ${visit.modele}*`,
+    `• Version : ${q.version}`,
+    `• Prix indicatif : *${q.priceLabel}*`,
     `• Showroom : ${visit.showroomName}`,
-    `• Date : ${when}`,
-    `• Heure : ${visit.time}`,
-    `• Mode : ${modeLabel}`,
-    visit.mode === 'meet' && visit.meetUrl ? `• Lien Google Meet : ${visit.meetUrl}` : null,
     '',
     'Merci de confirmer la disponibilité.',
   ])
@@ -182,46 +298,42 @@ export function formatVisitDate(iso: string): string {
 export function buildVisitReplyText(visit: VisitRequest): string {
   const firstName = visit.nom.trim().split(/\s+/)[0] || visit.nom.trim()
   const when = formatVisitDate(visit.date)
-
-  if (visit.mode === 'meet') {
-    return [
-      `Bonjour ${firstName} 👋`,
-      '',
-      `Merci pour votre demande de Google Meet concernant le JAC ${visit.modele}.`,
-      '',
-      'Voici la confirmation proposée :',
-      `• Showroom : ${visit.showroomName}`,
-      `• Date : ${when}`,
-      `• Heure : ${visit.time}`,
-      visit.meetUrl ? `• Lien Google Meet : ${visit.meetUrl}` : null,
-      '',
-      'Nous confirmons le créneau et restons disponibles sur WhatsApp pour tout ajustement.',
-      '',
-      'À bientôt,',
-      'JAC Motors Tunisie',
-      `WhatsApp : ${CONTACT.whatsappDisplay}`,
-    ]
-      .filter((line): line is string => line != null)
-      .join('\n')
-  }
+  const q = pack(visit.modele)
+  const isMeet = visit.mode === 'meet'
 
   return [
-    `Bonjour ${firstName} 👋`,
+    '*JAC MOTORS TUNISIE*',
+    '────────────────',
+    isMeet ? '*CONFIRMATION GOOGLE MEET*' : '*CONFIRMATION DE VISITE*',
+    `Réf. : *${visit.id}*`,
     '',
-    `Merci pour votre demande de visite showroom concernant le JAC ${visit.modele}.`,
+    `Bonjour *${firstName}*,`,
     '',
-    'Voici la confirmation proposée :',
+    isMeet
+      ? `Merci pour votre demande de Google Meet concernant le *JAC ${visit.modele}*.`
+      : `Merci pour votre demande de visite showroom concernant le *JAC ${visit.modele}*.`,
+    '',
+    '*Détails confirmés*',
     `• Showroom : ${visit.showroomName}`,
-    `• Date : ${when}`,
-    `• Heure : ${visit.time}`,
-    `• Réf. : ${visit.id}`,
+    `• Date : *${when}*`,
+    `• Heure : *${visit.time}*`,
+    `• Modèle : JAC ${visit.modele} (${q.version})`,
+    `• Prix indicatif : *${q.priceLabel}*`,
+    isMeet && visit.meetUrl ? `• Lien Google Meet : ${visit.meetUrl}` : null,
     '',
-    'Nous vous attendons volontiers. Un conseiller confirmera le créneau rapidement.',
+    isMeet
+      ? 'Nous restons disponibles pour ajuster le créneau. Merci d’arriver 5 minutes avant le Meet.'
+      : 'Nous vous accueillons volontiers. Merci d’arriver 10 minutes avant l’heure prévue.',
+    '',
+    '*Besoin d’un devis écrit ?*',
+    `→ ${CONTACT.siteUrl}/devis`,
     '',
     'À bientôt,',
-    'JAC Motors Tunisie',
+    '*JAC Motors Tunisie*',
     `WhatsApp : ${CONTACT.whatsappDisplay}`,
-  ].join('\n')
+  ]
+    .filter((line): line is string => line != null)
+    .join('\n')
 }
 
 export function buildVisitReplyWhatsAppUrl(visit: VisitRequest): string | null {

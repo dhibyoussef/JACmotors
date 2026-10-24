@@ -1882,6 +1882,40 @@ p {
   background: var(--jac-red);
 }
 
+.aside-price {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--white);
+}
+
+.preview-details {
+  margin: 0 0 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
+  padding: 0.75rem 0.9rem;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.preview-details summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.reply-box__text--compact {
+  margin-top: 0.75rem;
+  max-height: 220px;
+  overflow: auto;
+  font-size: 0.78rem;
+  background: rgba(0, 0, 0, 0.35);
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .aside-stack {
   display: grid;
   gap: 0.65rem;

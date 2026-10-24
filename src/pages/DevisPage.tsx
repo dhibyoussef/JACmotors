@@ -6,10 +6,12 @@ import {
   CONTACT,
   buildDevisReplyText,
   buildDevisReplyWhatsAppUrl,
+  buildDevisRequestText,
   buildDevisWhatsAppUrl,
   openWhatsApp,
   type DevisInput,
 } from '../lib/contact'
+import { QUOTE_PACKAGES } from '../lib/quotes'
 import { isValidTunisianPhone, sanitizeText } from '../lib/security'
 
 type DevisForm = {
@@ -36,6 +38,19 @@ export function DevisPage() {
   const showroomName = useMemo(
     () => showrooms.find((s) => s.id === form.showroomId)?.name ?? 'Showroom',
     [form.showroomId],
+  )
+
+  const quote = QUOTE_PACKAGES[form.modele]
+
+  const previewPayload = useMemo<DevisInput>(
+    () => ({
+      modele: form.modele,
+      showroom: showroomName,
+      nom: form.nom.trim() || 'Client',
+      telephone: form.telephone.trim() || CONTACT.whatsappDisplay,
+      besoin: form.besoin,
+    }),
+    [form.besoin, form.modele, form.nom, form.telephone, showroomName],
   )
 
   function onSubmit(e: FormEvent) {
@@ -88,7 +103,7 @@ export function DevisPage() {
         {sent ? (
           <article className="panel panel--ticket">
             <p className="section__eyebrow">WhatsApp ouvert</p>
-            <h2>Votre devis est prêt à envoyer</h2>
+            <h2>Devis professionnel prêt</h2>
             <dl className="ticket-grid">
               <div>
                 <dt>Nom</dt>
@@ -103,16 +118,24 @@ export function DevisPage() {
                 <dd>JAC {sent.modele}</dd>
               </div>
               <div>
+                <dt>Prix indicatif</dt>
+                <dd>{QUOTE_PACKAGES[sent.modele].priceLabel}</dd>
+              </div>
+              <div>
                 <dt>Showroom</dt>
                 <dd>{sent.showroom}</dd>
               </div>
-              <div className="ticket-grid__full">
+              <div>
                 <dt>Besoin</dt>
                 <dd>{sent.besoin}</dd>
               </div>
+              <div className="ticket-grid__full">
+                <dt>Version</dt>
+                <dd>{QUOTE_PACKAGES[sent.modele].version}</dd>
+              </div>
             </dl>
             <ReplyBox
-              title="Réponse à envoyer au client"
+              title="Devis complet à renvoyer au client"
               replyText={buildDevisReplyText(sent)}
               replyWhatsAppUrl={buildDevisReplyWhatsAppUrl(sent)}
               clientLabel={sent.telephone}
@@ -231,14 +254,22 @@ export function DevisPage() {
             </form>
 
             <aside className="panel panel--aside">
-              <p className="section__eyebrow">Parcours</p>
-              <h3>Simple et direct</h3>
+              <p className="section__eyebrow">Aperçu devis</p>
+              <h3>JAC {form.modele}</h3>
+              <p className="aside-price">{quote.priceLabel}</p>
+              <p className="form-hint">{quote.version}</p>
               <ul className="aside-list">
-                <li>1. Remplir le formulaire</li>
-                <li>2. Cliquer sur envoyer</li>
-                <li>3. WhatsApp s’ouvre avec le texte</li>
-                <li>4. Vous appuyez sur Envoyer</li>
+                <li>Prix catalogue inclus dans le message</li>
+                <li>Specs + points forts</li>
+                <li>Financement si demandé</li>
+                <li>Réponse pro prête après envoi</li>
               </ul>
+              <details className="preview-details">
+                <summary>Voir le texte WhatsApp</summary>
+                <pre className="reply-box__text reply-box__text--compact">
+                  {buildDevisRequestText(previewPayload)}
+                </pre>
+              </details>
               <div className="aside-stack">
                 <Link className="btn btn--primary" to="/visite">
                   Réserver une visite
