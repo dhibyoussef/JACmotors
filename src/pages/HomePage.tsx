@@ -152,20 +152,20 @@ export function HomePage() {
       <section className="commerce-band">
         <div className="commerce-band__copy">
           <p className="section__eyebrow">Contact commercial</p>
-          <h2>Devis WhatsApp ou visite showroom</h2>
+          <h2>Devis, visite ou entretien</h2>
           <p>
-            Demandez un prix, réservez une visite sur place, ou parlez à un conseiller en
-            Google Meet.
+            Demandez un prix, réservez une visite showroom / Google Meet, ou confiez
+            votre pickup à l’atelier.
           </p>
         </div>
         <div className="commerce-band__actions">
-          <Link className="btn btn--whatsapp" to="/devis">
+          <Link className="btn btn--primary" to="/devis">
             Demander un devis
           </Link>
-          <Link className="btn btn--primary" to="/visite">
+          <Link className="btn btn--ghost-dark" to="/visite">
             Réserver une visite
           </Link>
-          <Link className="btn btn--ghost" to="/reserver">
+          <Link className="btn btn--ghost-dark" to="/reserver">
             Entretien atelier
           </Link>
         </div>

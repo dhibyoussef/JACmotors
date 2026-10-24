@@ -4,13 +4,11 @@ export function PrivacyPage() {
   return (
     <>
       <header className="page-hero">
-        <p className="section__eyebrow" style={{ color: '#ff6b73' }}>
-          Protection des données
-        </p>
+        <p className="section__eyebrow page-hero__eyebrow">Protection des données</p>
         <h1>Confidentialité</h1>
-        <p>
-          Transparence sur ce que fait ce site Tunisie — réservation d’entretien
-          sans compte.
+        <p className="page-hero__lead">
+          Transparence sur ce que fait ce site Tunisie — réservation d’entretien sans
+          compte.
         </p>
       </header>
 

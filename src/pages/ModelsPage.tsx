@@ -22,6 +22,9 @@ export function ModelsPage() {
               <Link className="btn btn--ghost" to="/devis">
                 Demander un devis
               </Link>
+              <Link className="btn btn--ghost" to="/visite">
+                Réserver une visite
+              </Link>
             </div>
           </div>
           <div className="page-hero__aside">
@@ -36,7 +39,7 @@ export function ModelsPage() {
 
       <nav className="model-switcher" aria-label="Choisir un modèle">
         {models.map((m, index) => (
-          <a href={`#${m.id}`} key={m.id}>
+          <a href={`#${m.id}`} key={m.id} className="model-switcher__item">
             <span>0{index + 1}</span>
             <strong>JAC {m.name}</strong>
             <small>{m.drive}</small>
