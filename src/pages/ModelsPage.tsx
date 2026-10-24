@@ -79,8 +79,13 @@ export function ModelsPage() {
 
                 {frames.length > 0 && (
                   <div className="model-360-block">
-                    <p className="section__eyebrow">Vue interactive</p>
-                    <h3>Explorez le JAC {m.name} en 360°</h3>
+                    <div className="model-360-block__head">
+                      <div>
+                        <p className="section__eyebrow">Vue interactive</p>
+                        <h3>Explorez le JAC {m.name} en 360°</h3>
+                      </div>
+                      <p>Glissez pour tourner autour du véhicule.</p>
+                    </div>
                     <Photo360 frames={frames} label={`JAC ${m.name}`} />
                   </div>
                 )}

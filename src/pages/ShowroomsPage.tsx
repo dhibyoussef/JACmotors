@@ -32,7 +32,7 @@ export function ShowroomsPage() {
           <p className="section__eyebrow">Un doute sur la bonne adresse ?</p>
           <h2>Parlons de votre projet.</h2>
         </div>
-        <div className="demo-footer-cta__actions">
+        <div className="commerce-band__actions">
           <a
             className="btn btn--whatsapp"
             href={quickWhatsAppUrl('Bonjour, je souhaite des infos sur un showroom JAC.')}

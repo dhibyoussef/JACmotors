@@ -67,8 +67,11 @@ export function Layout() {
           <li>
             <NavLink to="/showrooms">Showrooms</NavLink>
           </li>
-          <li>
+          <li className="nav__item--desktop">
             <NavLink to="/avis">Avis</NavLink>
+          </li>
+          <li className="nav__item--desktop">
+            <NavLink to="/reserver">Entretien</NavLink>
           </li>
           <li>
             <NavLink to="/devis" className="nav__cta nav__cta--whatsapp">

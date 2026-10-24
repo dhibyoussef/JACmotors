@@ -37,7 +37,7 @@ export function Photo360({ frames, label }: Props) {
   }
 
   if (frames.length === 0) {
-    return <p className="demo-empty">Aucune image 360 disponible.</p>
+    return <p className="form-hint">Aucune image 360 disponible.</p>
   }
 
   return (
