@@ -3,7 +3,7 @@ import { CompareTable } from '../components/CompareTable'
 import { FaqSection } from '../components/FaqSection'
 import { TrustStrip } from '../components/TrustStrip'
 import { models, reviews } from '../data/content'
-import { QUOTE_PACKAGES, type QuoteModel } from '../lib/quotes'
+import { QUOTE_PACKAGES, stockBadgeClass, type QuoteModel } from '../lib/quotes'
 
 const highlightReviews = reviews.filter((r) => r.rating >= 4).slice(0, 3)
 
@@ -32,14 +32,18 @@ export function HomePage() {
             <Link className="btn btn--whatsapp" to="/devis">
               Devis WhatsApp
             </Link>
-            <Link className="btn btn--ghost home-hero__action-secondary" to="/visite">
-              Réserver une visite
+            <Link
+              className="btn btn--ghost home-hero__action-secondary"
+              to="/visite?mode=essai"
+            >
+              Essai routier
             </Link>
           </div>
           <div className="hero-trust">
             <span>2.0 CTI Diesel</span>
             <span>4×4</span>
             <span>105 000 DT · prix indicatif</span>
+            <span>Essai sur RDV</span>
           </div>
         </div>
         <div className="hero-scroll">
@@ -90,7 +94,7 @@ export function HomePage() {
           <li>
             <span>02</span>
             <h3>Demandez un devis</h3>
-            <p>Prix catalogue, specs et financement — message WhatsApp déjà prêt.</p>
+            <p>Prix, couleur, options et financement — message WhatsApp déjà prêt.</p>
             <Link className="text-link" to="/devis">
               Ouvrir le devis <span>↗</span>
             </Link>
@@ -98,7 +102,7 @@ export function HomePage() {
           <li>
             <span>03</span>
             <h3>Réservez</h3>
-            <p>Visite showroom ou Google Meet — créneau clair, confirmation rapide.</p>
+            <p>Visite, essai routier ou Google Meet — créneau clair, confirmation rapide.</p>
             <Link className="text-link" to="/visite">
               Choisir un créneau <span>↗</span>
             </Link>
@@ -127,6 +131,11 @@ export function HomePage() {
                   aria-label={`JAC ${model.name}`}
                 >
                   <span>{model.drive}</span>
+                  {quote && (
+                    <em className={`model-feature__stock ${stockBadgeClass(quote.stock)}`}>
+                      {quote.stockLabel}
+                    </em>
+                  )}
                   {quote && <em className="model-feature__price">{quote.priceLabel}</em>}
                 </div>
                 <div className="model-feature__body">
@@ -165,8 +174,8 @@ export function HomePage() {
             sol. Prêt pour le quotidien comme pour les routes moins simples.
           </p>
           <div className="home-hero__actions">
-            <Link className="btn btn--primary" to="/visite">
-              Planifier une visite
+            <Link className="btn btn--primary" to="/visite?mode=essai">
+              Planifier un essai
             </Link>
             <Link className="btn btn--ghost" to="/modeles#t8pro">
               Voir en 360°
@@ -246,9 +255,9 @@ export function HomePage() {
       <section className="commerce-band">
         <div className="commerce-band__copy">
           <p className="section__eyebrow">Contact commercial</p>
-          <h2>Devis, visite ou entretien</h2>
+          <h2>Devis, essai ou après-vente</h2>
           <p>
-            Demandez un prix, réservez une visite showroom / Google Meet, ou confiez
+            Demandez un prix avec couleur et options, réservez un essai, ou confiez
             votre pickup à l’atelier.
           </p>
         </div>
@@ -256,11 +265,11 @@ export function HomePage() {
           <Link className="btn btn--primary" to="/devis">
             Demander un devis
           </Link>
-          <Link className="btn btn--ghost-dark" to="/visite">
-            Réserver une visite
+          <Link className="btn btn--ghost-dark" to="/visite?mode=essai">
+            Essai routier
           </Link>
-          <Link className="btn btn--ghost-dark" to="/reserver">
-            Entretien atelier
+          <Link className="btn btn--ghost-dark" to="/apres-vente">
+            Après-vente
           </Link>
         </div>
       </section>

@@ -3,7 +3,7 @@ import { CompareTable } from '../components/CompareTable'
 import { Photo360 } from '../components/Photo360'
 import { models } from '../data/content'
 import { CONTACT, MODEL_360_FRAMES, buildShowroomMeetWhatsAppUrl } from '../lib/contact'
-import { QUOTE_PACKAGES, type QuoteModel } from '../lib/quotes'
+import { QUOTE_PACKAGES, stockBadgeClass, type QuoteModel } from '../lib/quotes'
 
 export function ModelsPage() {
   return (
@@ -67,6 +67,9 @@ export function ModelsPage() {
                     <span>{m.drive}</span>
                     <span>Double cabine</span>
                     {quote && <span className="meta-price">{quote.priceLabel}</span>}
+                    {quote && (
+                      <span className={stockBadgeClass(quote.stock)}>{quote.stockLabel}</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -168,13 +171,48 @@ export function ModelsPage() {
                     ))}
                   </ul>
                 </div>
+
+                {quote && (
+                  <div className="model-config">
+                    <div>
+                      <p className="section__eyebrow">Configurer le devis</p>
+                      <h3>Couleurs & options</h3>
+                      <p>
+                        Choisissez teinte et accessoires dans le devis WhatsApp — le
+                        message part déjà structuré.
+                      </p>
+                    </div>
+                    <div className="model-config__swatches" aria-hidden="true">
+                      {quote.colors.map((c) => (
+                        <span
+                          key={c.id}
+                          className="model-config__dot"
+                          style={{ backgroundColor: c.hex }}
+                          title={c.name}
+                        />
+                      ))}
+                    </div>
+                    <ul className="model-config__options">
+                      {quote.options.map((o) => (
+                        <li key={o.id}>{o.label}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <p className="source-note">{m.sourceNote}</p>
                 <div className="model-actions">
-                  <Link className="btn btn--primary" to="/visite">
-                    Réserver une visite
+                  <Link
+                    className="btn btn--primary"
+                    to={`/visite?mode=essai&modele=${encodeURIComponent(m.name)}`}
+                  >
+                    Essai routier
                   </Link>
                   <Link className="btn btn--whatsapp" to="/devis">
                     Devis WhatsApp
+                  </Link>
+                  <Link className="btn btn--outline" to="/visite">
+                    Visite showroom
                   </Link>
                   <a
                     className="btn btn--outline"

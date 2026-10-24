@@ -1,7 +1,9 @@
 import {
   QUOTE_PACKAGES,
+  colorById,
   devisRef,
   formatDt,
+  optionLabels,
   wantsFinancing,
   type QuoteModel,
 } from './quotes'
@@ -26,6 +28,10 @@ export type DevisInput = {
   nom: string
   telephone: string
   besoin: string
+  /** Paint color id from PAINT_COLORS */
+  couleurId?: string
+  /** Selected accessory option ids */
+  optionIds?: string[]
 }
 
 function toWhatsAppE164(phone: string): string | null {
@@ -47,6 +53,18 @@ function waUrl(
 
 function pack(modele: QuoteModel) {
   return QUOTE_PACKAGES[modele]
+}
+
+function devisColorLine(input: DevisInput): string | null {
+  if (!input.couleurId) return null
+  const color = colorById(input.couleurId)
+  return color ? `• Couleur souhaitée : *${color.name}*` : null
+}
+
+function devisOptionsLines(input: DevisInput): string[] {
+  const labels = optionLabels(input.optionIds ?? [])
+  if (!labels.length) return ['• Options : aucune sélectionnée (à discuter)']
+  return [`• Options souhaitées : ${labels.map((l) => `*${l}*`).join(', ')}`]
 }
 
 /** Client → dealer : structured devis request */
@@ -72,11 +90,16 @@ export function buildDevisRequestText(input: DevisInput): string {
     `• Transmission : ${q.drive}`,
     `• Motorisation : ${q.engine}`,
     `• Prix catalogue indicatif : *${q.priceLabel}*`,
+    `• Disponibilité : ${q.stockLabel}`,
+    devisColorLine(input),
+    ...devisOptionsLines(input),
     '',
     'Merci de me renvoyer le devis complet (prix, options, disponibilité' +
       (wantsFinancing(input.besoin) ? ', financement' : '') +
       ').',
-  ].join('\n')
+  ]
+    .filter((line): line is string => line != null)
+    .join('\n')
 }
 
 export function buildDevisWhatsAppUrl(input: DevisInput): string {
@@ -115,12 +138,15 @@ export function buildDevisReplyText(input: DevisInput, ref = devisRef()): string
     `• Transmission : ${q.drive}`,
     `• Motorisation : ${q.engine}`,
     `• État : Véhicule neuf`,
+    devisColorLine(input),
+    ...devisOptionsLines(input),
     '',
     `*${section++}) Prix Tunisie*`,
     `• Prix catalogue : *${q.priceLabel}*`,
     `• Montant de référence : *${formatDt(q.priceFromDt)}*`,
     '• Devise : Dinars tunisiens (DT)',
     '• Hors options / accessoires / frais éventuels',
+    `• Stock : ${q.stockLabel}`,
     `• Disponibilité : ${q.availability}`,
     `• Garantie : ${q.warranty}`,
     '',
@@ -159,15 +185,16 @@ export function buildDevisReplyText(input: DevisInput, ref = devisRef()): string
     '',
     `*${section++}) Prochaines étapes*`,
     '1. Confirmer ce devis avec un conseiller JAC',
-    '2. Réserver une visite showroom ou un Google Meet',
-    '3. Choisir options / couleur / équipements',
+    '2. Réserver une visite, un essai routier ou un Google Meet',
+    '3. Valider couleur / options / équipements',
     '4. Finaliser commande ou financement en showroom',
     '',
     '*Liens utiles*',
     `• Site : ${CONTACT.siteUrl}`,
     `• Demande devis : ${CONTACT.siteUrl}/devis`,
     `• Modèles 360° : ${CONTACT.siteUrl}/modeles`,
-    `• Visite / Meet : ${CONTACT.siteUrl}/visite`,
+    `• Visite / essai / Meet : ${CONTACT.siteUrl}/visite`,
+    `• Après-vente : ${CONTACT.siteUrl}/apres-vente`,
     '',
     `*Note* : ${q.note}`,
     '*Validité* : 7 jours',
@@ -204,7 +231,13 @@ export function buildShowroomMeetWhatsAppUrl(modele: 'T8' | 'T8 PRO'): string {
   ])
 }
 
-export type VisitMode = 'showroom' | 'meet'
+export type VisitMode = 'showroom' | 'meet' | 'essai'
+
+export function visitModeLabel(mode: VisitMode): string {
+  if (mode === 'meet') return 'Google Meet'
+  if (mode === 'essai') return 'Essai routier'
+  return 'Visite showroom'
+}
 
 export type VisitRequest = {
   id: string
@@ -246,6 +279,24 @@ export function meetUrlFromId(id: string): string {
   return `https://meet.google.com/${a}-${b}-${c}`
 }
 
+function visitHeadline(mode: VisitMode): string {
+  if (mode === 'meet') return '*DEMANDE GOOGLE MEET — SHOWROOM*'
+  if (mode === 'essai') return '*DEMANDE D’ESSAI ROUTIER*'
+  return '*DEMANDE DE VISITE SHOWROOM*'
+}
+
+function visitIntro(mode: VisitMode): string {
+  if (mode === 'meet') return 'Je souhaite un Google Meet pour découvrir les showrooms :'
+  if (mode === 'essai') return 'Je souhaite réserver un *essai routier* :'
+  return 'Je souhaite réserver une visite showroom :'
+}
+
+function visitModeDetail(mode: VisitMode): string {
+  if (mode === 'meet') return 'Google Meet (visioconférence)'
+  if (mode === 'essai') return 'Essai routier sur place'
+  return 'Sur place en showroom'
+}
+
 export function buildVisitWhatsAppUrl(visit: VisitRequest): string {
   const when = formatVisitDate(visit.date)
   const q = pack(visit.modele)
@@ -254,19 +305,20 @@ export function buildVisitWhatsAppUrl(visit: VisitRequest): string {
   return waUrl([
     '*JAC MOTORS TUNISIE*',
     '────────────────',
-    isMeet ? '*DEMANDE GOOGLE MEET — SHOWROOM*' : '*DEMANDE DE VISITE SHOWROOM*',
+    visitHeadline(visit.mode),
     '',
     'Bonjour JAC Motors Tunisie,',
-    isMeet
-      ? 'Je souhaite un Google Meet pour découvrir les showrooms :'
-      : 'Je souhaite réserver une visite showroom :',
+    visitIntro(visit.mode),
     '',
     '*Réservation*',
     `• Réf. : *${visit.id}*`,
     `• Date : *${when}*`,
     `• Heure : *${visit.time}*`,
-    `• Mode : ${isMeet ? 'Google Meet (visioconférence)' : 'Sur place en showroom'}`,
+    `• Mode : ${visitModeDetail(visit.mode)}`,
     isMeet && visit.meetUrl ? `• Lien Meet proposé : ${visit.meetUrl}` : null,
+    visit.mode === 'essai'
+      ? '• Permis de conduire valide à présenter le jour de l’essai'
+      : null,
     '',
     '*Client*',
     `• Nom : ${visit.nom}`,
@@ -294,36 +346,46 @@ export function formatVisitDate(iso: string): string {
   })
 }
 
-/** Suggested dealer reply to a visit / Meet request */
+/** Suggested dealer reply to a visit / Meet / essai request */
 export function buildVisitReplyText(visit: VisitRequest): string {
   const firstName = visit.nom.trim().split(/\s+/)[0] || visit.nom.trim()
   const when = formatVisitDate(visit.date)
   const q = pack(visit.modele)
   const isMeet = visit.mode === 'meet'
+  const isEssai = visit.mode === 'essai'
 
   return [
     '*JAC MOTORS TUNISIE*',
     '────────────────',
-    isMeet ? '*CONFIRMATION GOOGLE MEET*' : '*CONFIRMATION DE VISITE*',
+    isMeet
+      ? '*CONFIRMATION GOOGLE MEET*'
+      : isEssai
+        ? '*CONFIRMATION D’ESSAI ROUTIER*'
+        : '*CONFIRMATION DE VISITE*',
     `Réf. : *${visit.id}*`,
     '',
     `Bonjour *${firstName}*,`,
     '',
     isMeet
       ? `Merci pour votre demande de Google Meet concernant le *JAC ${visit.modele}*.`
-      : `Merci pour votre demande de visite showroom concernant le *JAC ${visit.modele}*.`,
+      : isEssai
+        ? `Merci pour votre demande d’essai routier concernant le *JAC ${visit.modele}*.`
+        : `Merci pour votre demande de visite showroom concernant le *JAC ${visit.modele}*.`,
     '',
     '*Détails confirmés*',
     `• Showroom : ${visit.showroomName}`,
     `• Date : *${when}*`,
     `• Heure : *${visit.time}*`,
+    `• Mode : ${visitModeLabel(visit.mode)}`,
     `• Modèle : JAC ${visit.modele} (${q.version})`,
     `• Prix indicatif : *${q.priceLabel}*`,
     isMeet && visit.meetUrl ? `• Lien Google Meet : ${visit.meetUrl}` : null,
     '',
     isMeet
       ? 'Nous restons disponibles pour ajuster le créneau. Merci d’arriver 5 minutes avant le Meet.'
-      : 'Nous vous accueillons volontiers. Merci d’arriver 10 minutes avant l’heure prévue.',
+      : isEssai
+        ? 'Merci d’apporter votre permis de conduire valide. Arrivée conseillée 10 minutes avant l’heure prévue.'
+        : 'Nous vous accueillons volontiers. Merci d’arriver 10 minutes avant l’heure prévue.',
     '',
     '*Besoin d’un devis écrit ?*',
     `→ ${CONTACT.siteUrl}/devis`,

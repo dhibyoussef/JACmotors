@@ -1,8 +1,8 @@
 const ITEMS = [
   { title: 'Prix catalogue', text: 'Affiché dès le devis WhatsApp' },
-  { title: 'Financement', text: 'Exemples de mensualités inclus' },
-  { title: 'Visite / Meet', text: 'Créneaux clairs, lien Meet auto' },
-  { title: 'Réseau local', text: 'Tunis · Ben Arous · El Mghira' },
+  { title: 'Couleur & options', text: 'Teinte et accessoires inclus' },
+  { title: 'Essai / Meet', text: 'Créneaux clairs, lien Meet auto' },
+  { title: 'Après-vente', text: 'Garantie · pièces · atelier' },
 ]
 
 export function TrustStrip() {

@@ -13,6 +13,7 @@ import {
   listVisitRequests,
   openWhatsApp,
   saveVisitRequest,
+  visitModeLabel,
   type VisitMode,
   type VisitRequest,
 } from '../lib/contact'
@@ -29,6 +30,11 @@ type VisitForm = {
   mode: VisitMode
 }
 
+function parseMode(value: string | null): VisitMode | null {
+  if (value === 'meet' || value === 'essai' || value === 'showroom') return value
+  return null
+}
+
 const initial: VisitForm = {
   nom: '',
   telephone: '',
@@ -43,11 +49,11 @@ const initial: VisitForm = {
 export function VisitPage() {
   const [searchParams] = useSearchParams()
   const [form, setForm] = useState<VisitForm>(() => {
-    const modeParam = searchParams.get('mode')
+    const modeParam = parseMode(searchParams.get('mode'))
     const modeleParam = searchParams.get('modele')
     return {
       ...initial,
-      mode: modeParam === 'meet' ? 'meet' : 'showroom',
+      mode: modeParam ?? 'showroom',
       modele: modeleParam === 'T8' || modeleParam === 'T8 PRO' ? modeleParam : 'T8 PRO',
     }
   })
@@ -63,11 +69,11 @@ export function VisitPage() {
   )
 
   useEffect(() => {
-    const modeParam = searchParams.get('mode')
+    const modeParam = parseMode(searchParams.get('mode'))
     const modeleParam = searchParams.get('modele')
     setForm((prev) => ({
       ...prev,
-      mode: modeParam === 'meet' ? 'meet' : prev.mode,
+      mode: modeParam ?? prev.mode,
       modele:
         modeleParam === 'T8' || modeleParam === 'T8 PRO' ? modeleParam : prev.modele,
     }))
@@ -138,17 +144,33 @@ export function VisitPage() {
     }
   }
 
+  const heroCopy =
+    form.mode === 'essai'
+      ? {
+          eyebrow: 'Essai routier',
+          title: 'Prenez le volant du JAC.',
+          lead: `Réservez un créneau d’essai avec permis valide. Confirmation sur WhatsApp ${CONTACT.whatsappDisplay}.`,
+        }
+      : form.mode === 'meet'
+        ? {
+            eyebrow: 'Google Meet',
+            title: 'Découvrez le showroom à distance.',
+            lead: `Le lien Meet part automatiquement dans le message WhatsApp ${CONTACT.whatsappDisplay}.`,
+          }
+        : {
+            eyebrow: 'Visite showroom',
+            title: 'Réservez un créneau clair.',
+            lead: `Sur place, essai routier ou Google Meet — la demande part sur WhatsApp ${CONTACT.whatsappDisplay}.`,
+          }
+
   return (
     <>
       <header className="page-hero">
         <div className="page-hero__grid">
           <div>
-            <p className="section__eyebrow page-hero__eyebrow">Visite showroom</p>
-            <h1>Réservez un créneau clair.</h1>
-            <p className="page-hero__lead">
-              Sur place, ou en Google Meet pour découvrir les showrooms à distance après
-              la vue 360°. La demande part sur WhatsApp {CONTACT.whatsappDisplay}.
-            </p>
+            <p className="section__eyebrow page-hero__eyebrow">{heroCopy.eyebrow}</p>
+            <h1>{heroCopy.title}</h1>
+            <p className="page-hero__lead">{heroCopy.lead}</p>
           </div>
           <div className="page-hero__aside">
             <span>Ligne WhatsApp</span>
@@ -186,9 +208,7 @@ export function VisitPage() {
               </div>
               <div>
                 <dt>Mode</dt>
-                <dd>
-                  {ticket.mode === 'meet' ? 'Google Meet' : 'Sur place en showroom'}
-                </dd>
+                <dd>{visitModeLabel(ticket.mode)}</dd>
               </div>
               {ticket.mode === 'meet' && ticket.meetUrl && (
                 <div className="ticket-grid__full">
@@ -212,6 +232,18 @@ export function VisitPage() {
                 >
                   Créer une réunion Meet
                 </a>
+              </div>
+            )}
+
+            {ticket.mode === 'essai' && (
+              <div className="meet-box">
+                <p>
+                  Apportez votre permis de conduire valide. Le conseiller confirmera le
+                  véhicule d’essai et le parcours.
+                </p>
+                <Link className="btn btn--primary" to="/devis">
+                  Préparer un devis
+                </Link>
               </div>
             )}
 
@@ -252,7 +284,7 @@ export function VisitPage() {
             <form className="panel panel--form" onSubmit={onSubmit}>
               <div className="panel__head">
                 <p className="section__eyebrow">Réservation</p>
-                <h2>Votre visite</h2>
+                <h2>Votre rendez-vous</h2>
               </div>
 
               <div className="field-grid">
@@ -325,8 +357,8 @@ export function VisitPage() {
                 </label>
               </div>
 
-              <fieldset className="mode-picker">
-                <legend>Mode de visite</legend>
+              <fieldset className="mode-picker mode-picker--triple">
+                <legend>Mode de rendez-vous</legend>
                 <label className={form.mode === 'showroom' ? 'active' : ''}>
                   <input
                     type="radio"
@@ -335,8 +367,20 @@ export function VisitPage() {
                     onChange={() => setForm((v) => ({ ...v, mode: 'showroom' }))}
                   />
                   <span>
-                    <strong>En showroom</strong>
-                    <small>Visite / essai sur place</small>
+                    <strong>Visite</strong>
+                    <small>Découverte showroom</small>
+                  </span>
+                </label>
+                <label className={form.mode === 'essai' ? 'active' : ''}>
+                  <input
+                    type="radio"
+                    name="visit-mode"
+                    checked={form.mode === 'essai'}
+                    onChange={() => setForm((v) => ({ ...v, mode: 'essai' }))}
+                  />
+                  <span>
+                    <strong>Essai routier</strong>
+                    <small>Permis requis</small>
                   </span>
                 </label>
                 <label className={form.mode === 'meet' ? 'active' : ''}>
@@ -348,7 +392,7 @@ export function VisitPage() {
                   />
                   <span>
                     <strong>Google Meet</strong>
-                    <small>Voir / découvrir les showrooms en vidéo</small>
+                    <small>À distance</small>
                   </span>
                 </label>
               </fieldset>
@@ -405,12 +449,18 @@ export function VisitPage() {
 
               <div className="panel__actions">
                 <button type="submit" className="btn btn--whatsapp" disabled={!form.time}>
-                  Envoyer la visite sur WhatsApp
+                  {form.mode === 'essai'
+                    ? 'Envoyer l’essai sur WhatsApp'
+                    : form.mode === 'meet'
+                      ? 'Envoyer le Meet sur WhatsApp'
+                      : 'Envoyer la visite sur WhatsApp'}
                 </button>
                 <p className="form-hint">
                   {form.mode === 'meet'
                     ? 'Le message inclura automatiquement le lien Google Meet.'
-                    : `La demande part vers ${CONTACT.whatsappDisplay}.`}
+                    : form.mode === 'essai'
+                      ? 'Le message précise l’essai routier et le permis requis.'
+                      : `La demande part vers ${CONTACT.whatsappDisplay}.`}
                 </p>
               </div>
             </form>
@@ -420,9 +470,9 @@ export function VisitPage() {
               <h3>3 étapes simples</h3>
               <ul className="aside-list">
                 <li>Remplissez vos infos</li>
-                <li>Choisissez date + créneau libre</li>
+                <li>Choisissez visite, essai ou Meet</li>
+                <li>Date + créneau libre</li>
                 <li>WhatsApp s’ouvre avec le message prêt</li>
-                <li>Meet : le lien est dans le message</li>
               </ul>
               {history.length > 0 && (
                 <div className="history-mini">
@@ -432,8 +482,7 @@ export function VisitPage() {
                       <li key={h.id}>
                         <strong>{h.id}</strong>
                         <span>
-                          {h.modele} · {h.date} {h.time} ·{' '}
-                          {h.mode === 'meet' ? 'Meet' : 'Showroom'}
+                          {h.modele} · {h.date} {h.time} · {visitModeLabel(h.mode)}
                         </span>
                       </li>
                     ))}

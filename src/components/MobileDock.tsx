@@ -9,8 +9,8 @@ export function MobileDock() {
 
   return (
     <nav className="mobile-dock" aria-label="Actions rapides">
-      <Link className="mobile-dock__btn mobile-dock__btn--ghost" to="/visite">
-        Visite
+      <Link className="mobile-dock__btn mobile-dock__btn--ghost" to="/visite?mode=essai">
+        Essai
       </Link>
       <Link className="mobile-dock__btn mobile-dock__btn--primary" to="/devis">
         Devis WhatsApp

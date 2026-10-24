@@ -8,6 +8,7 @@ import { ReviewsPage } from './pages/ReviewsPage'
 import { PrivacyPage } from './pages/PrivacyPage'
 import { DevisPage } from './pages/DevisPage'
 import { VisitPage } from './pages/VisitPage'
+import { AfterSalesPage } from './pages/AfterSalesPage'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="devis" element={<DevisPage />} />
           <Route path="visite" element={<VisitPage />} />
           <Route path="reserver" element={<ReservePage />} />
+          <Route path="apres-vente" element={<AfterSalesPage />} />
           <Route path="showrooms" element={<ShowroomsPage />} />
           <Route path="avis" element={<ReviewsPage />} />
           <Route path="confidentialite" element={<PrivacyPage />} />

@@ -33,6 +33,7 @@ export function Layout() {
       '/devis': 'Demander un devis · JAC Tunisie',
       '/visite': 'Visite showroom · JAC Tunisie',
       '/reserver': 'Réserver un entretien · JAC Tunisie',
+      '/apres-vente': 'Après-vente · JAC Tunisie',
       '/showrooms': 'Showrooms · JAC Tunisie',
       '/avis': 'Avis clients · JAC Tunisie',
       '/confidentialite': 'Confidentialité · JAC Tunisie',
@@ -77,7 +78,7 @@ export function Layout() {
             <NavLink to="/avis">Avis</NavLink>
           </li>
           <li className="nav__item--desktop">
-            <NavLink to="/reserver">Entretien</NavLink>
+            <NavLink to="/apres-vente">Après-vente</NavLink>
           </li>
           <li>
             <NavLink to="/devis" className="nav__cta">
@@ -143,6 +144,9 @@ export function Layout() {
               </li>
               <li>
                 <NavLink to="/reserver">Entretien</NavLink>
+              </li>
+              <li>
+                <NavLink to="/apres-vente">Après-vente</NavLink>
               </li>
               <li>
                 <NavLink to="/showrooms">Showrooms</NavLink>

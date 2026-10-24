@@ -11,7 +11,12 @@ import {
   openWhatsApp,
   type DevisInput,
 } from '../lib/contact'
-import { QUOTE_PACKAGES } from '../lib/quotes'
+import {
+  QUOTE_PACKAGES,
+  colorById,
+  optionLabels,
+  stockBadgeClass,
+} from '../lib/quotes'
 import { isValidTunisianPhone, sanitizeText } from '../lib/security'
 
 type DevisForm = {
@@ -20,6 +25,8 @@ type DevisForm = {
   nom: string
   telephone: string
   besoin: string
+  couleurId: string
+  optionIds: string[]
 }
 
 const initial: DevisForm = {
@@ -28,6 +35,8 @@ const initial: DevisForm = {
   nom: '',
   telephone: '',
   besoin: 'Devis véhicule neuf',
+  couleurId: 'blanc',
+  optionIds: [],
 }
 
 export function DevisPage() {
@@ -41,6 +50,7 @@ export function DevisPage() {
   )
 
   const quote = QUOTE_PACKAGES[form.modele]
+  const selectedColor = colorById(form.couleurId)
 
   const previewPayload = useMemo<DevisInput>(
     () => ({
@@ -49,9 +59,28 @@ export function DevisPage() {
       nom: form.nom.trim() || 'Client',
       telephone: form.telephone.trim() || CONTACT.whatsappDisplay,
       besoin: form.besoin,
+      couleurId: form.couleurId,
+      optionIds: form.optionIds,
     }),
-    [form.besoin, form.modele, form.nom, form.telephone, showroomName],
+    [
+      form.besoin,
+      form.couleurId,
+      form.modele,
+      form.nom,
+      form.optionIds,
+      form.telephone,
+      showroomName,
+    ],
   )
+
+  function toggleOption(id: string) {
+    setForm((f) => ({
+      ...f,
+      optionIds: f.optionIds.includes(id)
+        ? f.optionIds.filter((x) => x !== id)
+        : [...f.optionIds, id],
+    }))
+  }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -73,6 +102,8 @@ export function DevisPage() {
       nom,
       telephone: form.telephone.trim(),
       besoin: sanitizeText(form.besoin, 120),
+      couleurId: form.couleurId,
+      optionIds: form.optionIds,
     }
 
     openWhatsApp(buildDevisWhatsAppUrl(payload))
@@ -85,10 +116,10 @@ export function DevisPage() {
         <div className="page-hero__grid">
           <div>
             <p className="section__eyebrow page-hero__eyebrow">Devis WhatsApp</p>
-            <h1>Remplissez, envoyez, c’est parti.</h1>
+            <h1>Prix, couleur, options — prêts à envoyer.</h1>
             <p className="page-hero__lead">
-              Le formulaire prépare un devis professionnel avec prix, specs et options.
-              WhatsApp s’ouvre vers {CONTACT.whatsappDisplay} — il ne reste qu’à envoyer.
+              Composez un devis professionnel avec catalogue, teinte, accessoires et
+              financement. WhatsApp s’ouvre vers {CONTACT.whatsappDisplay}.
             </p>
           </div>
           <div className="page-hero__aside">
@@ -122,6 +153,16 @@ export function DevisPage() {
                 <dd>{QUOTE_PACKAGES[sent.modele].priceLabel}</dd>
               </div>
               <div>
+                <dt>Couleur</dt>
+                <dd>{colorById(sent.couleurId ?? '')?.name ?? '—'}</dd>
+              </div>
+              <div>
+                <dt>Options</dt>
+                <dd>
+                  {optionLabels(sent.optionIds ?? []).join(', ') || 'Aucune sélectionnée'}
+                </dd>
+              </div>
+              <div>
                 <dt>Showroom</dt>
                 <dd>{sent.showroom}</dd>
               </div>
@@ -153,8 +194,8 @@ export function DevisPage() {
               <button type="button" className="btn btn--outline" onClick={() => setSent(null)}>
                 Nouveau devis
               </button>
-              <Link className="btn btn--primary" to="/visite">
-                Réserver une visite
+              <Link className="btn btn--primary" to="/visite?mode=essai">
+                Réserver un essai
               </Link>
             </div>
             <p className="form-hint">
@@ -240,6 +281,54 @@ export function DevisPage() {
                 </label>
               </div>
 
+              <fieldset className="color-picker">
+                <legend>Couleur souhaitée</legend>
+                <div className="color-picker__row" role="radiogroup" aria-label="Couleur">
+                  {quote.colors.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      role="radio"
+                      aria-checked={form.couleurId === c.id}
+                      className={`color-swatch ${form.couleurId === c.id ? 'selected' : ''}`}
+                      style={{ backgroundColor: c.hex }}
+                      title={c.name}
+                      onClick={() => setForm((f) => ({ ...f, couleurId: c.id }))}
+                    >
+                      <span className={c.light ? 'color-swatch__check light' : 'color-swatch__check'}>
+                        {form.couleurId === c.id ? '✓' : ''}
+                      </span>
+                      <em>{c.name}</em>
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+
+              <fieldset className="option-picker">
+                <legend>Options / accessoires</legend>
+                <div className="option-picker__grid">
+                  {quote.options.map((opt) => {
+                    const checked = form.optionIds.includes(opt.id)
+                    return (
+                      <label
+                        key={opt.id}
+                        className={`option-chip ${checked ? 'selected' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleOption(opt.id)}
+                        />
+                        <span>
+                          <strong>{opt.label}</strong>
+                          <small>{opt.detail}</small>
+                        </span>
+                      </label>
+                    )
+                  })}
+                </div>
+              </fieldset>
+
               {error && <p className="form-error">{error}</p>}
 
               <div className="panel__actions">
@@ -254,13 +343,39 @@ export function DevisPage() {
             </form>
 
             <aside className="panel panel--aside quote-card">
-              <p className="section__eyebrow">Aperçu devis</p>
+              <div className="quote-card__top">
+                <p className="section__eyebrow">Aperçu devis</p>
+                <span className={stockBadgeClass(quote.stock)}>{quote.stockLabel}</span>
+              </div>
               <h3>JAC {form.modele}</h3>
               <div className="quote-card__price">
                 <span>Prix catalogue</span>
                 <strong>{quote.priceLabel}</strong>
               </div>
               <p className="quote-card__version">{quote.version}</p>
+
+              {selectedColor && (
+                <div className="quote-card__color">
+                  <span
+                    className="quote-card__color-dot"
+                    style={{ backgroundColor: selectedColor.hex }}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <strong>{selectedColor.name}</strong>
+                    <span>Teinte demandée</span>
+                  </div>
+                </div>
+              )}
+
+              {form.optionIds.length > 0 && (
+                <ul className="quote-card__options">
+                  {optionLabels(form.optionIds).map((label) => (
+                    <li key={label}>{label}</li>
+                  ))}
+                </ul>
+              )}
+
               <div className="finance-teaser">
                 <p className="finance-teaser__label">Financement indicatif</p>
                 <ul>
@@ -282,6 +397,7 @@ export function DevisPage() {
               </div>
               <ul className="aside-list">
                 <li>Prix catalogue inclus dans le message</li>
+                <li>Couleur + options sélectionnées</li>
                 <li>Specs + points forts</li>
                 <li>Financement si demandé</li>
                 <li>Réponse pro prête après envoi</li>
@@ -293,8 +409,8 @@ export function DevisPage() {
                 </pre>
               </details>
               <div className="aside-stack">
-                <Link className="btn btn--primary" to="/visite">
-                  Réserver une visite
+                <Link className="btn btn--primary" to="/visite?mode=essai">
+                  Réserver un essai
                 </Link>
                 <Link className="btn btn--ghost-dark" to="/modeles">
                   Voir les modèles 360°

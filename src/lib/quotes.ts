@@ -9,6 +9,22 @@ export type FinancingExample = {
   monthlyFromDt: number
 }
 
+export type PaintColor = {
+  id: string
+  name: string
+  hex: string
+  /** Light text on dark paint */
+  light?: boolean
+}
+
+export type QuoteOption = {
+  id: string
+  label: string
+  detail: string
+}
+
+export type StockStatus = 'disponible' | 'sur_commande' | 'a_confirmer'
+
 export type QuotePackage = {
   modele: QuoteModel
   priceFromDt: number
@@ -20,10 +36,45 @@ export type QuotePackage = {
   specs: string[]
   included: string[]
   financingExamples: FinancingExample[]
+  colors: PaintColor[]
+  options: QuoteOption[]
+  stock: StockStatus
+  stockLabel: string
   note: string
   warranty: string
   availability: string
 }
+
+export const PAINT_COLORS: PaintColor[] = [
+  { id: 'blanc', name: 'Blanc Glacier', hex: '#f4f5f7' },
+  { id: 'noir', name: 'Noir Obsidienne', hex: '#111418', light: true },
+  { id: 'argent', name: 'Argent Métallisé', hex: '#9aa3ad' },
+  { id: 'gris', name: 'Gris Graphite', hex: '#4a525c', light: true },
+  { id: 'rouge', name: 'Rouge JAC', hex: '#e30613', light: true },
+]
+
+export const QUOTE_OPTIONS: QuoteOption[] = [
+  {
+    id: 'couvre-benne',
+    label: 'Couvre-benne',
+    detail: 'Protection bennette (selon dispo showroom)',
+  },
+  {
+    id: 'barres',
+    label: 'Barres de toit / roll-bar',
+    detail: 'Accessoire lifestyle / utilitaire',
+  },
+  {
+    id: 'tapis',
+    label: 'Tapis & protections',
+    detail: 'Habitacle + bac de benne',
+  },
+  {
+    id: 'alarme',
+    label: 'Alarme / antivol',
+    detail: 'Sécurisation véhicule',
+  },
+]
 
 export const QUOTE_PACKAGES: Record<QuoteModel, QuotePackage> = {
   T8: {
@@ -53,8 +104,12 @@ export const QUOTE_PACKAGES: Record<QuoteModel, QuotePackage> = {
       { apportPct: 30, durationMonths: 48, monthlyFromDt: 1_450 },
       { apportPct: 40, durationMonths: 60, monthlyFromDt: 1_050 },
     ],
+    colors: PAINT_COLORS,
+    options: QUOTE_OPTIONS,
+    stock: 'a_confirmer',
+    stockLabel: 'Stock à confirmer',
     note: 'Prix indicatif Tunisie — confirmation stock, options et version exacte en showroom.',
-    warranty: 'Garantie constructeur — détail en showroom',
+    warranty: 'Garantie constructeur — détail en showroom / page Après-vente',
     availability: 'Sous réserve de stock — délai confirmé par le conseiller',
   },
   'T8 PRO': {
@@ -90,8 +145,12 @@ export const QUOTE_PACKAGES: Record<QuoteModel, QuotePackage> = {
       { apportPct: 30, durationMonths: 48, monthlyFromDt: 1_620 },
       { apportPct: 40, durationMonths: 60, monthlyFromDt: 1_180 },
     ],
+    colors: PAINT_COLORS,
+    options: QUOTE_OPTIONS,
+    stock: 'disponible',
+    stockLabel: 'Disponible showroom',
     note: 'Prix catalogue indicatif Tunisie (105 000 DT) — hors options, sous réserve de stock et confirmation concessionnaire.',
-    warranty: 'Garantie constructeur — détail en showroom',
+    warranty: 'Garantie constructeur — détail en showroom / page Après-vente',
     availability: 'Sous réserve de stock — délai confirmé par le conseiller',
   },
 }
@@ -109,4 +168,20 @@ export function devisRef(): string {
 
 export function wantsFinancing(besoin: string): boolean {
   return /financ|crédit|credit|leasing|mensual/i.test(besoin)
+}
+
+export function colorById(id: string): PaintColor | undefined {
+  return PAINT_COLORS.find((c) => c.id === id)
+}
+
+export function optionLabels(ids: string[]): string[] {
+  return ids
+    .map((id) => QUOTE_OPTIONS.find((o) => o.id === id)?.label)
+    .filter((label): label is string => Boolean(label))
+}
+
+export function stockBadgeClass(stock: StockStatus): string {
+  if (stock === 'disponible') return 'stock-badge stock-badge--ok'
+  if (stock === 'sur_commande') return 'stock-badge stock-badge--order'
+  return 'stock-badge stock-badge--wait'
 }

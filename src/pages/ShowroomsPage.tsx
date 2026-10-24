@@ -2,6 +2,10 @@ import { Link } from 'react-router-dom'
 import { showrooms } from '../data/content'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 
+const MAP_QUERY = 'JAC Motors Tunisie Tunis'
+const MAP_EMBED = `https://www.google.com/maps?q=${encodeURIComponent(MAP_QUERY)}&output=embed`
+const MAP_OPEN = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAP_QUERY)}`
+
 export function ShowroomsPage() {
   return (
     <>
@@ -37,6 +41,27 @@ export function ShowroomsPage() {
             <strong>1</strong>
             <span>Équipe dédiée</span>
           </div>
+        </div>
+      </section>
+
+      <section className="section showroom-map-section">
+        <div className="section__head section__head--row">
+          <div>
+            <p className="section__eyebrow">Carte</p>
+            <h2 className="section__title">Repérez le réseau</h2>
+          </div>
+          <a className="text-link" href={MAP_OPEN} target="_blank" rel="noreferrer">
+            Ouvrir dans Google Maps <span>↗</span>
+          </a>
+        </div>
+        <div className="map-embed">
+          <iframe
+            title="Carte JAC Motors Tunisie"
+            src={MAP_EMBED}
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            allowFullScreen
+          />
         </div>
       </section>
 

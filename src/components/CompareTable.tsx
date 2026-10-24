@@ -6,6 +6,7 @@ const ROWS: { label: string; t8: string; pro: string }[] = [
   { label: 'Version', t8: QUOTE_PACKAGES.T8.version, pro: QUOTE_PACKAGES['T8 PRO'].version },
   { label: 'Transmission', t8: QUOTE_PACKAGES.T8.drive, pro: QUOTE_PACKAGES['T8 PRO'].drive },
   { label: 'Motorisation', t8: 'Selon config Tunisie', pro: QUOTE_PACKAGES['T8 PRO'].engine },
+  { label: 'Stock', t8: QUOTE_PACKAGES.T8.stockLabel, pro: QUOTE_PACKAGES['T8 PRO'].stockLabel },
   { label: 'Positionnement', t8: 'Essentiel / utilitaire', pro: 'Premium / lifestyle' },
   { label: 'Équipement', t8: 'Base réseau Tunisie', pro: 'Cuir · 360° · jantes 18″' },
 ]

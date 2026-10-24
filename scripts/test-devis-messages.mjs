@@ -89,12 +89,17 @@ function buildReply(input) {
     `• Transmission : ${q.drive}`,
     `• Motorisation : ${q.engine}`,
     '• État : Véhicule neuf',
+    input.couleur ? `• Couleur souhaitée : *${input.couleur}*` : null,
+    input.options?.length
+      ? `• Options souhaitées : ${input.options.map((o) => `*${o}*`).join(', ')}`
+      : null,
     '',
     `*${section++}) Prix Tunisie*`,
     `• Prix catalogue : *${q.priceLabel}*`,
     `• Montant de référence : *${formatDt(q.priceFromDt)}*`,
     '• Devise : Dinars tunisiens (DT)',
     '• Hors options / accessoires / frais éventuels',
+    '• Stock : Disponible showroom',
     '',
     `*${section++}) Inclus dans l’offre*`,
     ...q.included.map((h) => `• ${h}`),
@@ -128,12 +133,13 @@ function buildReply(input) {
     '',
     `*${section++}) Prochaines étapes*`,
     '1. Confirmer ce devis avec un conseiller JAC',
-    '2. Réserver une visite showroom ou un Google Meet',
-    '3. Choisir options / couleur / équipements',
+    '2. Réserver une visite, un essai routier ou un Google Meet',
+    '3. Valider couleur / options / équipements',
     '4. Finaliser commande ou financement en showroom',
     '',
     `• Site : ${CONTACT.siteUrl}`,
     `• Demande devis : ${CONTACT.siteUrl}/devis`,
+    `• Après-vente : ${CONTACT.siteUrl}/apres-vente`,
     '',
     '*Validité* : 7 jours',
     '*Mention* : devis indicatif, non contractuel — prix, options et stock à confirmer en showroom.',
@@ -141,7 +147,7 @@ function buildReply(input) {
     '*JAC Motors Tunisie*',
     `WhatsApp : ${CONTACT.whatsappDisplay}`,
   )
-  return lines.join('\n')
+  return lines.filter((l) => l != null).join('\n')
 }
 
 function buildRequest(input) {
@@ -164,9 +170,16 @@ function buildRequest(input) {
     `• Modèle : *JAC ${input.modele}*`,
     `• Version : ${q.version}`,
     `• Prix catalogue indicatif : *${q.priceLabel}*`,
+    '• Disponibilité : Disponible showroom',
+    input.couleur ? `• Couleur souhaitée : *${input.couleur}*` : null,
+    input.options?.length
+      ? `• Options souhaitées : ${input.options.map((o) => `*${o}*`).join(', ')}`
+      : null,
     '',
     'Merci de me renvoyer le devis complet (prix, options, disponibilité, financement).',
-  ].join('\n')
+  ]
+    .filter((l) => l != null)
+    .join('\n')
 }
 
 const sample = {
@@ -175,6 +188,8 @@ const sample = {
   nom: 'Youssef dhib',
   telephone: '+21699757218',
   besoin: 'Devis + financement',
+  couleur: 'Blanc Glacier',
+  options: ['Couvre-benne', 'Alarme / antivol'],
 }
 
 const reply = buildReply(sample)
@@ -207,6 +222,16 @@ test('includes financing section with monthly examples', () => {
 test('includes vehicle version and engine', () => {
   assert.match(reply, /2\.0 L CTI Diesel/)
   assert.match(reply, /320 Nm/)
+})
+test('includes color and options', () => {
+  assert.match(reply, /Blanc Glacier/)
+  assert.match(reply, /Couvre-benne/)
+  assert.match(request, /Blanc Glacier/)
+  assert.match(request, /Alarme/)
+})
+test('includes essai and aftersales next steps', () => {
+  assert.match(reply, /essai routier/)
+  assert.match(reply, /apres-vente/)
 })
 test('includes professional sections', () => {
   assert.match(reply, /DEVIS PROFESSIONNEL/)
