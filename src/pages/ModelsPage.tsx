@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { CompareTable } from '../components/CompareTable'
 import { Photo360 } from '../components/Photo360'
 import { models } from '../data/content'
 import { CONTACT, MODEL_360_FRAMES, buildShowroomMeetWhatsAppUrl } from '../lib/contact'
@@ -189,6 +190,8 @@ export function ModelsPage() {
           )
         })}
       </div>
+
+      <CompareTable />
     </>
   )
 }

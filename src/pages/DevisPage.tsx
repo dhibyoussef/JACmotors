@@ -261,6 +261,25 @@ export function DevisPage() {
                 <strong>{quote.priceLabel}</strong>
               </div>
               <p className="quote-card__version">{quote.version}</p>
+              <div className="finance-teaser">
+                <p className="finance-teaser__label">Financement indicatif</p>
+                <ul>
+                  {quote.financingExamples.map((ex) => (
+                    <li key={`${ex.apportPct}-${ex.durationMonths}`}>
+                      <strong>
+                        ~{ex.monthlyFromDt.toLocaleString('fr-TN')} DT
+                        <small>/mois</small>
+                      </strong>
+                      <span>
+                        apport ~{ex.apportPct}% · {ex.durationMonths} mois
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className="finance-teaser__note">
+                  Choisissez « Devis + financement » pour l’inclure dans WhatsApp.
+                </p>
+              </div>
               <ul className="aside-list">
                 <li>Prix catalogue inclus dans le message</li>
                 <li>Specs + points forts</li>

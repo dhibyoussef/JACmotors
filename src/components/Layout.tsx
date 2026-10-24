@@ -1,6 +1,7 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
+import { MobileDock } from './MobileDock'
 
 export function Layout() {
   const [open, setOpen] = useState(false)
@@ -89,6 +90,8 @@ export function Layout() {
       <main id="contenu">
         <Outlet />
       </main>
+
+      <MobileDock />
 
       {!hideFab && (
         <a

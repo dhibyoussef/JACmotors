@@ -1,6 +1,11 @@
 import { Link } from 'react-router-dom'
-import { models } from '../data/content'
+import { CompareTable } from '../components/CompareTable'
+import { FaqSection } from '../components/FaqSection'
+import { TrustStrip } from '../components/TrustStrip'
+import { models, reviews } from '../data/content'
 import { QUOTE_PACKAGES, type QuoteModel } from '../lib/quotes'
+
+const highlightReviews = reviews.filter((r) => r.rating >= 4).slice(0, 3)
 
 export function HomePage() {
   return (
@@ -41,6 +46,8 @@ export function HomePage() {
           Faire défiler <span>↓</span>
         </div>
       </section>
+
+      <TrustStrip />
 
       <section className="home-strip" aria-label="Points clés">
         <article>
@@ -99,27 +106,6 @@ export function HomePage() {
         </ol>
       </section>
 
-      <section className="home-proof">
-        <div className="home-proof__mark">
-          JAC<span>+</span>
-        </div>
-        <div>
-          <p className="section__eyebrow">Un accompagnement qui continue</p>
-          <h2>
-            Du premier regard
-            <br />
-            au dernier kilomètre.
-          </h2>
-        </div>
-        <p className="home-proof__copy">
-          Découvrez votre modèle, demandez un devis WhatsApp et planifiez votre visite
-          dans le réseau JAC Motors Tunisie.
-        </p>
-        <Link className="text-link text-link--light" to="/showrooms">
-          Explorer le réseau <span>↗</span>
-        </Link>
-      </section>
-
       <section className="section home-intro">
         <div className="section__head">
           <p className="section__eyebrow">La gamme JAC en Tunisie</p>
@@ -164,6 +150,8 @@ export function HomePage() {
         </div>
       </section>
 
+      <CompareTable />
+
       <section className="home-spec-banner">
         <div className="home-spec-banner__copy">
           <p className="section__eyebrow">T8 PRO · 2.0 CTI DIESEL</p>
@@ -200,6 +188,60 @@ export function HomePage() {
           </div>
         </div>
       </section>
+
+      {highlightReviews.length > 0 && (
+        <section className="section social-proof">
+          <div className="section__head section__head--row">
+            <div>
+              <p className="section__eyebrow">Avis clients</p>
+              <h2 className="section__title">Ce que dit le réseau.</h2>
+            </div>
+            <Link className="text-link" to="/avis">
+              Voir tous les avis <span>↗</span>
+            </Link>
+          </div>
+          <div className="social-proof__grid">
+            {highlightReviews.map((r) => (
+              <article className="social-proof__card" key={r.id}>
+                <div className="stars" aria-label={`${r.rating} sur 5`}>
+                  {'★'.repeat(r.rating)}
+                  {'☆'.repeat(5 - r.rating)}
+                </div>
+                <p>“{r.text.length > 160 ? `${r.text.slice(0, 160)}…` : r.text}”</p>
+                <footer>
+                  <strong>{r.author}</strong>
+                  <span>
+                    {r.location} · {r.date}
+                  </span>
+                </footer>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="home-proof">
+        <div className="home-proof__mark">
+          JAC<span>+</span>
+        </div>
+        <div>
+          <p className="section__eyebrow">Un accompagnement qui continue</p>
+          <h2>
+            Du premier regard
+            <br />
+            au dernier kilomètre.
+          </h2>
+        </div>
+        <p className="home-proof__copy">
+          Découvrez votre modèle, demandez un devis WhatsApp et planifiez votre visite
+          dans le réseau JAC Motors Tunisie.
+        </p>
+        <Link className="text-link text-link--light" to="/showrooms">
+          Explorer le réseau <span>↗</span>
+        </Link>
+      </section>
+
+      <FaqSection />
 
       <section className="commerce-band">
         <div className="commerce-band__copy">
