@@ -1,4 +1,6 @@
+import { Link } from 'react-router-dom'
 import { showrooms } from '../data/content'
+import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 
 export function ShowroomsPage() {
   return (
@@ -25,7 +27,25 @@ export function ShowroomsPage() {
         </div>
       </section>
 
-      <section className="network-cta"><div><p className="section__eyebrow">Un doute sur la bonne adresse ?</p><h2>Parlons de votre projet.</h2></div><a className="btn btn--primary" href="tel:+21650512877">Appeler JAC Motors</a></section>
+      <section className="network-cta">
+        <div>
+          <p className="section__eyebrow">Un doute sur la bonne adresse ?</p>
+          <h2>Parlons de votre projet.</h2>
+        </div>
+        <div className="demo-footer-cta__actions">
+          <a
+            className="btn btn--whatsapp"
+            href={quickWhatsAppUrl('Bonjour, je souhaite des infos sur un showroom JAC.')}
+            target="_blank"
+            rel="noreferrer"
+          >
+            WhatsApp {CONTACT.whatsappLabel}
+          </a>
+          <Link className="btn btn--primary" to="/visite">
+            Réserver une visite
+          </Link>
+        </div>
+      </section>
     </>
   )
 }

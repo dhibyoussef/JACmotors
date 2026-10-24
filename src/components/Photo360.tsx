@@ -45,7 +45,7 @@ export function Photo360({ frames, label }: Props) {
       <div
         className="photo360__stage"
         role="img"
-        aria-label={`${label} — vue interactive démo, image ${index + 1} sur ${frames.length}`}
+        aria-label={`${label} — vue interactive, image ${index + 1} sur ${frames.length}`}
         onMouseDown={(e) => onPointerDown(e.clientX)}
         onMouseMove={(e) => onPointerMove(e.clientX)}
         onMouseUp={onPointerUp}
@@ -56,7 +56,7 @@ export function Photo360({ frames, label }: Props) {
       >
         <img src={frames[index]} alt={`${label} — angle ${index + 1}`} draggable={false} />
         <div className="photo360__hint">
-          <span>360° DÉMO</span>
+          <span>VUE 360°</span>
           <strong>Glissez pour tourner</strong>
         </div>
         <div className="photo360__progress" aria-hidden="true">
@@ -77,8 +77,7 @@ export function Photo360({ frames, label }: Props) {
         </button>
       </div>
       <p className="photo360__note">
-        Démo : rotation à partir des photos existantes. Une vraie capture 360°
-        remplacera ces angles plus tard.
+        Glissez horizontalement pour explorer le véhicule sous plusieurs angles.
       </p>
     </div>
   )

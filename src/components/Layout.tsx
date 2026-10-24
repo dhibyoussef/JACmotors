@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 
 export function Layout() {
   const [open, setOpen] = useState(false)
@@ -23,11 +24,12 @@ export function Layout() {
     const titles: Record<string, string> = {
       '/': 'JAC Motors Tunisie',
       '/modeles': 'Modèles T8 & T8 PRO · JAC Tunisie',
+      '/devis': 'Demander un devis · JAC Tunisie',
+      '/visite': 'Visite showroom · JAC Tunisie',
       '/reserver': 'Réserver un entretien · JAC Tunisie',
       '/showrooms': 'Showrooms · JAC Tunisie',
       '/avis': 'Avis clients · JAC Tunisie',
       '/confidentialite': 'Confidentialité · JAC Tunisie',
-      '/demo': 'Démo · Devis, 360°, Visite & Meet',
     }
     document.title = titles[location.pathname] ?? 'JAC Motors Tunisie'
   }, [location.pathname])
@@ -60,19 +62,17 @@ export function Layout() {
             <NavLink to="/modeles">Modèles</NavLink>
           </li>
           <li>
+            <NavLink to="/visite">Visite</NavLink>
+          </li>
+          <li>
             <NavLink to="/showrooms">Showrooms</NavLink>
           </li>
           <li>
             <NavLink to="/avis">Avis</NavLink>
           </li>
           <li>
-            <NavLink to="/demo" className="nav__demo">
-              Démo
-            </NavLink>
-          </li>
-          <li>
-            <NavLink to="/reserver" className="nav__cta">
-              Réserver
+            <NavLink to="/devis" className="nav__cta nav__cta--whatsapp">
+              Devis
             </NavLink>
           </li>
         </ul>
@@ -82,25 +82,28 @@ export function Layout() {
         <Outlet />
       </main>
 
+      <a
+        className="whatsapp-fab"
+        href={quickWhatsAppUrl()}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`WhatsApp ${CONTACT.whatsappDisplay}`}
+      >
+        WhatsApp
+      </a>
+
       <footer className="footer">
         <div className="footer__grid">
           <div>
             <div className="footer__brand">JAC MOTORS</div>
             <p>
-              Vitrine Tunisie — pickups T8 &amp; T8 PRO. Photos / fiches :{' '}
-              <a
-                href="https://jacen.jac.com.cn/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                jacen.jac.com.cn
-              </a>
-              . Réservation atelier sécurisée, sans compte.
+              Vitrine Tunisie — pickups T8 &amp; T8 PRO. Devis WhatsApp, visite showroom,
+              entretien atelier.
             </p>
             <div className="footer-badges">
-              <span>HTTPS recommandé</span>
-              <span>Données locales</span>
-              <span>Sans tracking</span>
+              <span>WhatsApp {CONTACT.whatsappLabel}</span>
+              <span>Visite & Meet</span>
+              <span>Entretien atelier</span>
             </div>
           </div>
           <div>
@@ -113,16 +116,19 @@ export function Layout() {
                 <NavLink to="/modeles">Modèles</NavLink>
               </li>
               <li>
-                <NavLink to="/reserver">Entretien</NavLink>
+                <NavLink to="/devis">Devis WhatsApp</NavLink>
               </li>
               <li>
-                <NavLink to="/demo">Démo (tests)</NavLink>
+                <NavLink to="/visite">Visite showroom</NavLink>
+              </li>
+              <li>
+                <NavLink to="/reserver">Entretien</NavLink>
               </li>
               <li>
                 <NavLink to="/showrooms">Showrooms</NavLink>
               </li>
               <li>
-                <NavLink to="/avis">Avis Google</NavLink>
+                <NavLink to="/avis">Avis</NavLink>
               </li>
               <li>
                 <NavLink to="/confidentialite">Confidentialité</NavLink>
@@ -133,23 +139,31 @@ export function Layout() {
             <h3>Contact</h3>
             <ul>
               <li>
+                <a
+                  href={quickWhatsAppUrl()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  WhatsApp · {CONTACT.whatsappLabel}
+                </a>
+              </li>
+              <li>
+                <a href={`tel:+${CONTACT.whatsappE164}`}>
+                  Appeler · {CONTACT.whatsappLabel}
+                </a>
+              </li>
+              <li>
                 <a href="tel:+21650512877">Etraton · 50 512 877</a>
               </li>
               <li>
                 <a href="tel:+21679731328">CLH Motors · 79 731 328</a>
-              </li>
-              <li>
-                <a href="tel:+21658554765">Ben Arous · 58 554 765</a>
-              </li>
-              <li>
-                <a href="tel:+21629402200">El Mghira · 29 402 200</a>
               </li>
             </ul>
           </div>
         </div>
         <div className="footer__copy">
           <span>© {new Date().getFullYear()} JAC Motors Tunisie</span>
-          <span>Site informatif · max. 6 pages · non affilié au site CN hors contenus cités</span>
+          <span>T8 &amp; T8 PRO · réseau Tunisie</span>
         </div>
       </footer>
     </div>

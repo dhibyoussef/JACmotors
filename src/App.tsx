@@ -6,7 +6,8 @@ import { ReservePage } from './pages/ReservePage'
 import { ShowroomsPage } from './pages/ShowroomsPage'
 import { ReviewsPage } from './pages/ReviewsPage'
 import { PrivacyPage } from './pages/PrivacyPage'
-import { DemoPage } from './pages/DemoPage'
+import { DevisPage } from './pages/DevisPage'
+import { VisitPage } from './pages/VisitPage'
 
 export default function App() {
   return (
@@ -15,11 +16,13 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="modeles" element={<ModelsPage />} />
+          <Route path="devis" element={<DevisPage />} />
+          <Route path="visite" element={<VisitPage />} />
           <Route path="reserver" element={<ReservePage />} />
           <Route path="showrooms" element={<ShowroomsPage />} />
           <Route path="avis" element={<ReviewsPage />} />
           <Route path="confidentialite" element={<PrivacyPage />} />
-          <Route path="demo" element={<DemoPage />} />
+          <Route path="demo" element={<Navigate to="/devis" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>

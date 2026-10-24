@@ -14,9 +14,9 @@ export function HomePage() {
             4×4 diesel, double cabine et confort premium. Découvrez le JAC T8 PRO,
             disponible en Tunisie à partir de 105 000 DT.
           </p>
-          <div className="home-hero__actions">
+            <div className="home-hero__actions">
             <Link className="btn btn--primary" to="/modeles#t8pro">Découvrir le T8 PRO</Link>
-            <Link className="btn btn--ghost" to="/reserver">Réserver un essai</Link>
+            <Link className="btn btn--ghost" to="/visite">Réserver une visite</Link>
           </div>
           <div className="hero-trust">
             <span>2.0 CTI Diesel</span><span>4×4</span><span>105 000 DT · prix indicatif</span>
@@ -66,7 +66,7 @@ export function HomePage() {
           <p className="section__eyebrow">T8 PRO · 2.0 CTI DIESEL</p>
           <h2>La force utile,<br />sans compromis.</h2>
           <p>Un moteur diesel 2.0 L, une boîte manuelle 6 rapports et 220 mm de garde au sol. Le T8 PRO est prêt pour vos trajets quotidiens comme pour les routes moins simples.</p>
-          <Link className="btn btn--primary" to="/reserver">Planifier un essai</Link>
+          <Link className="btn btn--primary" to="/visite">Planifier une visite</Link>
         </div>
         <div className="home-spec-banner__stats">
           <div><strong>320</strong><span>Nm de couple</span></div>
@@ -82,11 +82,14 @@ export function HomePage() {
 
       <section className="demo-home-cta">
         <div>
-          <p className="section__eyebrow">Nouveau · à tester</p>
-          <h2>Devis WhatsApp, 360°, visite showroom & Meet</h2>
-          <p>Une page démo pour valider les 4 prochaines fonctionnalités avant la mise en production.</p>
+          <p className="section__eyebrow">Contact commercial</p>
+          <h2>Devis WhatsApp ou visite showroom</h2>
+          <p>Demandez un prix, réservez une visite sur place, ou parlez à un conseiller en Google Meet.</p>
         </div>
-        <Link className="btn btn--primary" to="/demo">Ouvrir la démo</Link>
+        <div className="demo-footer-cta__actions">
+          <Link className="btn btn--whatsapp" to="/devis">Demander un devis</Link>
+          <Link className="btn btn--primary" to="/visite">Réserver une visite</Link>
+        </div>
       </section>
     </>
   )

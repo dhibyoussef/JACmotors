@@ -1,11 +1,11 @@
-/** Demo configuration — replace WhatsApp number before real launch */
+/** Commercial contact & booking helpers */
 
-export const DEMO = {
-  /** Etraton Tunis — change when sales confirms the real WhatsApp inbox */
-  whatsappE164: '21650512877',
-  whatsappLabel: '50 512 877',
-  meetDemoNote:
-    'Mode démo : le lien Meet ci-dessous ouvre Google Meet pour créer une vraie réunion de test.',
+export const CONTACT = {
+  whatsappE164: '21699757218',
+  whatsappLabel: '99 757 218',
+  whatsappDisplay: '+216 99 757 218',
+  meetNote:
+    'Le bouton ouvre Google Meet pour démarrer ou rejoindre votre visioconférence avec un conseiller.',
 } as const
 
 export type DevisInput = {
@@ -19,7 +19,7 @@ export type DevisInput = {
 export function buildDevisWhatsAppUrl(input: DevisInput): string {
   const lines = [
     'Bonjour JAC Motors Tunisie 👋',
-    'Je souhaite un devis (DEMO site) :',
+    'Je souhaite un devis :',
     `• Modèle : JAC ${input.modele}`,
     `• Showroom : ${input.showroom}`,
     input.nom.trim() ? `• Nom : ${input.nom.trim()}` : null,
@@ -30,7 +30,14 @@ export function buildDevisWhatsAppUrl(input: DevisInput): string {
   ].filter((line): line is string => line != null)
 
   const text = encodeURIComponent(lines.join('\n'))
-  return `https://wa.me/${DEMO.whatsappE164}?text=${text}`
+  return `https://wa.me/${CONTACT.whatsappE164}?text=${text}`
+}
+
+export function quickWhatsAppUrl(message?: string): string {
+  const text = encodeURIComponent(
+    message?.trim() || 'Bonjour JAC Motors Tunisie, je souhaite plus d’informations.',
+  )
+  return `https://wa.me/${CONTACT.whatsappE164}?text=${text}`
 }
 
 export type VisitMode = 'showroom' | 'meet'
@@ -50,7 +57,7 @@ export type VisitRequest = {
   createdAt: string
 }
 
-const VISIT_KEY = 'jac_demo_visits_v1'
+const VISIT_KEY = 'jac_visits_v1'
 
 function randomId(): string {
   const n = Math.random().toString(36).slice(2, 8).toUpperCase()
@@ -59,8 +66,7 @@ function randomId(): string {
   return `VISITE-${day}-${n}`
 }
 
-/** Demo Meet helper — opens Google Meet “new meeting” so testers can try the product */
-export function demoMeetCreateUrl(): string {
+export function meetCreateUrl(): string {
   return 'https://meet.google.com/new'
 }
 
@@ -71,7 +77,7 @@ export function saveVisitRequest(
     ...input,
     id: randomId(),
     createdAt: new Date().toISOString(),
-    meetUrl: input.mode === 'meet' ? demoMeetCreateUrl() : null,
+    meetUrl: input.mode === 'meet' ? meetCreateUrl() : null,
   }
 
   try {
@@ -93,8 +99,8 @@ export function listVisitRequests(): VisitRequest[] {
   }
 }
 
-/** Frames for the demo 360 — real multi-angle assets when available */
-export const DEMO_360_FRAMES: Record<'t8' | 't8pro', string[]> = {
+/** Multi-angle frames for the interactive 360 viewer */
+export const MODEL_360_FRAMES: Record<'t8' | 't8pro', string[]> = {
   t8: [
     '/images/jac/t8-a.jpg',
     '/images/jac/t8-b.jpg',
