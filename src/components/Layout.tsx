@@ -27,6 +27,7 @@ export function Layout() {
       '/showrooms': 'Showrooms · JAC Tunisie',
       '/avis': 'Avis clients · JAC Tunisie',
       '/confidentialite': 'Confidentialité · JAC Tunisie',
+      '/demo': 'Démo · Devis, 360°, Visite & Meet',
     }
     document.title = titles[location.pathname] ?? 'JAC Motors Tunisie'
   }, [location.pathname])
@@ -63,6 +64,11 @@ export function Layout() {
           </li>
           <li>
             <NavLink to="/avis">Avis</NavLink>
+          </li>
+          <li>
+            <NavLink to="/demo" className="nav__demo">
+              Démo
+            </NavLink>
           </li>
           <li>
             <NavLink to="/reserver" className="nav__cta">
@@ -108,6 +114,9 @@ export function Layout() {
               </li>
               <li>
                 <NavLink to="/reserver">Entretien</NavLink>
+              </li>
+              <li>
+                <NavLink to="/demo">Démo (tests)</NavLink>
               </li>
               <li>
                 <NavLink to="/showrooms">Showrooms</NavLink>

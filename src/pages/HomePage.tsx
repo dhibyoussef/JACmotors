@@ -79,6 +79,15 @@ export function HomePage() {
         <div><p className="section__eyebrow">Après-vente JAC</p><h2>Votre prochain rendez-vous commence ici.</h2><p>Choisissez votre atelier, votre créneau et recevez un ticket de confirmation.</p></div>
         <Link className="btn btn--primary" to="/reserver">Prendre rendez-vous</Link>
       </section>
+
+      <section className="demo-home-cta">
+        <div>
+          <p className="section__eyebrow">Nouveau · à tester</p>
+          <h2>Devis WhatsApp, 360°, visite showroom & Meet</h2>
+          <p>Une page démo pour valider les 4 prochaines fonctionnalités avant la mise en production.</p>
+        </div>
+        <Link className="btn btn--primary" to="/demo">Ouvrir la démo</Link>
+      </section>
     </>
   )
 }
