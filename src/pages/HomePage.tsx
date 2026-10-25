@@ -94,7 +94,7 @@ export function HomePage() {
           <li>
             <span>02</span>
             <h3>Demandez un devis</h3>
-            <p>Prix, couleur, options et financement — message WhatsApp déjà prêt.</p>
+            <p>Confirmation WhatsApp, puis PDF professionnel envoyé automatiquement.</p>
             <Link className="text-link" to="/devis">
               Ouvrir le devis <span>↗</span>
             </Link>

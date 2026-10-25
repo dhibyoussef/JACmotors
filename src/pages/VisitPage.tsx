@@ -1,17 +1,14 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { ReplyBox } from '../components/ReplyBox'
 import { showrooms } from '../data/content'
+import { submitVisiteLead } from '../lib/api'
 import {
   CONTACT,
-  buildVisitReplyText,
-  buildVisitReplyWhatsAppUrl,
-  buildVisitWhatsAppUrl,
   formatVisitDate,
   getVisitDays,
   getVisitSlots,
   listVisitRequests,
-  openWhatsApp,
+  meetUrlFromId,
   saveVisitRequest,
   visitModeLabel,
   type VisitMode,
@@ -46,6 +43,10 @@ const initial: VisitForm = {
   mode: 'showroom',
 }
 
+type TicketState = VisitRequest & {
+  automationMode?: string
+}
+
 export function VisitPage() {
   const [searchParams] = useSearchParams()
   const [form, setForm] = useState<VisitForm>(() => {
@@ -58,9 +59,9 @@ export function VisitPage() {
     }
   })
   const [error, setError] = useState('')
-  const [ticket, setTicket] = useState<VisitRequest | null>(null)
+  const [ticket, setTicket] = useState<TicketState | null>(null)
   const [history, setHistory] = useState<VisitRequest[]>(() => listVisitRequests())
-  const [sent, setSent] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const days = useMemo(() => getVisitDays(form.showroomId), [form.showroomId, ticket])
   const slots = useMemo(
@@ -99,10 +100,9 @@ export function VisitPage() {
     })
   }, [form.date, slots])
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
-    setSent(false)
 
     const nom = sanitizeText(form.nom, 80)
     if (nom.length < 2) {
@@ -123,6 +123,7 @@ export function VisitPage() {
       return
     }
 
+    setSubmitting(true)
     try {
       const saved = saveVisitRequest({
         nom,
@@ -135,12 +136,37 @@ export function VisitPage() {
         time: form.time,
         mode: form.mode,
       })
-      setTicket(saved)
+
+      const api = await submitVisiteLead({
+        nom: saved.nom,
+        telephone: saved.telephone,
+        email: saved.email,
+        modele: saved.modele,
+        showroomId: saved.showroomId,
+        showroomName: saved.showroomName,
+        date: saved.date,
+        time: saved.time,
+        mode: saved.mode,
+        meetUrl: saved.meetUrl ?? meetUrlFromId(saved.id),
+      })
+
+      if (!api.ok) {
+        setError(api.error)
+        setSubmitting(false)
+        return
+      }
+
+      setTicket({
+        ...saved,
+        id: api.data.leadId || saved.id,
+        meetUrl: api.data.meetUrl ?? saved.meetUrl,
+        automationMode: api.data.whatsapp.mode,
+      })
       setHistory(listVisitRequests())
-      openWhatsApp(buildVisitWhatsAppUrl(saved))
-      setSent(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible d’enregistrer la visite.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -149,18 +175,18 @@ export function VisitPage() {
       ? {
           eyebrow: 'Essai routier',
           title: 'Prenez le volant du JAC.',
-          lead: `Réservez un créneau d’essai avec permis valide. Confirmation sur WhatsApp ${CONTACT.whatsappDisplay}.`,
+          lead: 'Réservez un créneau d’essai. Confirmation WhatsApp automatique sur votre numéro.',
         }
       : form.mode === 'meet'
         ? {
             eyebrow: 'Google Meet',
             title: 'Découvrez le showroom à distance.',
-            lead: `Le lien Meet part automatiquement dans le message WhatsApp ${CONTACT.whatsappDisplay}.`,
+            lead: 'Le lien Meet et la confirmation partent automatiquement sur WhatsApp.',
           }
         : {
             eyebrow: 'Visite showroom',
             title: 'Réservez un créneau clair.',
-            lead: `Sur place, essai routier ou Google Meet — la demande part sur WhatsApp ${CONTACT.whatsappDisplay}.`,
+            lead: 'Visite, essai ou Meet — confirmation automatique sur votre WhatsApp.',
           }
 
   return (
@@ -173,20 +199,22 @@ export function VisitPage() {
             <p className="page-hero__lead">{heroCopy.lead}</p>
           </div>
           <div className="page-hero__aside">
-            <span>Ligne WhatsApp</span>
-            <strong className="page-hero__aside-phone">{CONTACT.whatsappLabel}</strong>
-            <p>Toutes les demandes arrivent ici</p>
+            <span>Workflow JAC</span>
+            <strong className="page-hero__aside-phone">Auto WhatsApp</strong>
+            <p>Confirmation client · alerte concessionnaire</p>
           </div>
         </div>
       </header>
 
       <section className="section commerce">
         {ticket ? (
-          <article className="panel panel--ticket">
-            <p className="section__eyebrow">
-              {sent ? 'Envoyé vers WhatsApp' : 'Confirmation'}
-            </p>
+          <article className="panel panel--ticket panel--success-flow">
+            <p className="section__eyebrow">Rendez-vous enregistré</p>
             <h2>{ticket.id}</h2>
+            <p className="success-flow__lead">
+              Confirmation envoyée automatiquement sur WhatsApp{' '}
+              <strong>{ticket.telephone}</strong>. Pas de second message manuel à renvoyer.
+            </p>
             <dl className="ticket-grid">
               <div>
                 <dt>Nom</dt>
@@ -220,63 +248,47 @@ export function VisitPage() {
 
             {ticket.mode === 'meet' && ticket.meetUrl && (
               <div className="meet-box">
-                <p>
-                  Le lien Meet est dans le message WhatsApp. Rouvrez WhatsApp si besoin,
-                  ou démarrez une vraie réunion.
-                </p>
+                <p>Le lien Meet est inclus dans le WhatsApp de confirmation.</p>
                 <a
                   className="btn btn--primary"
-                  href="https://meet.google.com/new"
+                  href={ticket.meetUrl}
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Créer une réunion Meet
+                  Ouvrir le lien Meet
                 </a>
               </div>
             )}
 
             {ticket.mode === 'essai' && (
               <div className="meet-box">
-                <p>
-                  Apportez votre permis de conduire valide. Le conseiller confirmera le
-                  véhicule d’essai et le parcours.
-                </p>
+                <p>Apportez votre permis de conduire valide le jour de l’essai.</p>
                 <Link className="btn btn--primary" to="/devis">
-                  Préparer un devis
+                  Demander un devis PDF
                 </Link>
               </div>
             )}
 
-            <ReplyBox
-              title="Réponse à envoyer au client"
-              replyText={buildVisitReplyText(ticket)}
-              replyWhatsAppUrl={buildVisitReplyWhatsAppUrl(ticket)}
-              clientLabel={ticket.telephone}
-            />
-
             <div className="panel__actions panel__actions--row">
-              <a
-                className="btn btn--whatsapp"
-                href={buildVisitWhatsAppUrl(ticket)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Rouvrir la demande
-              </a>
               <button
                 type="button"
                 className="btn btn--outline"
                 onClick={() => {
                   setTicket(null)
-                  setSent(false)
                   setForm((f) => ({ ...f, time: '' }))
                 }}
               >
-                Nouvelle visite
+                Nouveau rendez-vous
               </button>
+              <Link className="btn btn--primary" to="/devis">
+                Demander un devis
+              </Link>
             </div>
             <p className="form-hint">
-              1) Le client envoie la demande → 2) Vous renvoyez la réponse suggérée.
+              Mode WhatsApp : <strong>{ticket.automationMode || 'api'}</strong>
+              {ticket.automationMode === 'dry-run'
+                ? ' — configurez WHATSAPP_TOKEN pour l’envoi réel.'
+                : ''}
             </p>
           </article>
         ) : (
@@ -299,7 +311,7 @@ export function VisitPage() {
                   />
                 </label>
                 <label className="field">
-                  <span>Téléphone</span>
+                  <span>WhatsApp (Tunisie)</span>
                   <input
                     required
                     value={form.telephone}
@@ -448,31 +460,28 @@ export function VisitPage() {
               {error && <p className="form-error">{error}</p>}
 
               <div className="panel__actions">
-                <button type="submit" className="btn btn--whatsapp" disabled={!form.time}>
-                  {form.mode === 'essai'
-                    ? 'Envoyer l’essai sur WhatsApp'
-                    : form.mode === 'meet'
-                      ? 'Envoyer le Meet sur WhatsApp'
-                      : 'Envoyer la visite sur WhatsApp'}
+                <button
+                  type="submit"
+                  className="btn btn--whatsapp"
+                  disabled={!form.time || submitting}
+                >
+                  {submitting ? 'Envoi…' : 'Confirmer sur WhatsApp'}
                 </button>
                 <p className="form-hint">
-                  {form.mode === 'meet'
-                    ? 'Le message inclura automatiquement le lien Google Meet.'
-                    : form.mode === 'essai'
-                      ? 'Le message précise l’essai routier et le permis requis.'
-                      : `La demande part vers ${CONTACT.whatsappDisplay}.`}
+                  Le message part automatiquement vers votre numéro — plus besoin d’ouvrir
+                  WhatsApp manuellement ({CONTACT.whatsappLabel} notifié côté JAC).
                 </p>
               </div>
             </form>
 
             <aside className="panel panel--aside">
               <p className="section__eyebrow">Comment ça marche</p>
-              <h3>3 étapes simples</h3>
+              <h3>Automatisé de bout en bout</h3>
               <ul className="aside-list">
-                <li>Remplissez vos infos</li>
-                <li>Choisissez visite, essai ou Meet</li>
-                <li>Date + créneau libre</li>
-                <li>WhatsApp s’ouvre avec le message prêt</li>
+                <li>Vous remplissez le formulaire</li>
+                <li>Confirmation WhatsApp au client</li>
+                <li>Alerte au concessionnaire</li>
+                <li>Meet : lien inclus automatiquement</li>
               </ul>
               {history.length > 0 && (
                 <div className="history-mini">
@@ -491,7 +500,7 @@ export function VisitPage() {
               )}
               <div className="aside-stack">
                 <Link className="btn btn--primary" to="/devis">
-                  Demander un devis
+                  Demander un devis PDF
                 </Link>
                 <Link className="btn btn--ghost-dark" to="/modeles">
                   Voir en 360°

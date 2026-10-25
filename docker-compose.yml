@@ -1,0 +1,22 @@
+services:
+  jacmotors:
+    build: .
+    container_name: jacmotors-automation
+    restart: always
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      PORT: 8787
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://127.0.0.1:8787}
+      PDF_DELAY_MS: ${PDF_DELAY_MS:-90000}
+      WHATSAPP_DEALER_E164: ${WHATSAPP_DEALER_E164:-21699757218}
+      WHATSAPP_TOKEN: ${WHATSAPP_TOKEN:-}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_API_VERSION: ${WHATSAPP_API_VERSION:-v21.0}
+    volumes:
+      - jac_data:/app/server/data
+
+volumes:
+  jac_data:

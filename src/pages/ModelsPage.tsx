@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import { CompareTable } from '../components/CompareTable'
+import { InterestLeadForm } from '../components/InterestLeadForm'
 import { Photo360 } from '../components/Photo360'
 import { models } from '../data/content'
-import { CONTACT, MODEL_360_FRAMES, buildShowroomMeetWhatsAppUrl } from '../lib/contact'
+import { MODEL_360_FRAMES } from '../lib/contact'
 import { QUOTE_PACKAGES, stockBadgeClass, type QuoteModel } from '../lib/quotes'
 
 export function ModelsPage() {
@@ -103,8 +104,8 @@ export function ModelsPage() {
                       <div>
                         <strong>Envie de voir le showroom en vrai (ou en vidéo) ?</strong>
                         <p>
-                          Réservez un Google Meet — le lien part sur WhatsApp{' '}
-                          {CONTACT.whatsappLabel}.
+                          Laissez votre WhatsApp — confirmation automatique. Ou réservez un
+                          créneau Meet / visite.
                         </p>
                       </div>
                       <div className="model-360-cta__actions">
@@ -112,17 +113,17 @@ export function ModelsPage() {
                           className="btn btn--primary"
                           to={`/visite?mode=meet&modele=${encodeURIComponent(m.name)}`}
                         >
-                          Meet pour voir le showroom
+                          Meet — choisir un créneau
                         </Link>
-                        <a
-                          className="btn btn--whatsapp"
-                          href={buildShowroomMeetWhatsAppUrl(m.name as 'T8' | 'T8 PRO')}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          Demander le Meet sur WhatsApp
-                        </a>
+                        <Link className="btn btn--outline" to="/devis">
+                          Devis PDF auto
+                        </Link>
                       </div>
+                      <InterestLeadForm
+                        modele={m.name as 'T8' | 'T8 PRO'}
+                        source="360"
+                        title={`Rappel WhatsApp après le 360° JAC ${m.name}`}
+                      />
                     </div>
                   </div>
                 )}

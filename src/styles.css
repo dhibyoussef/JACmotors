@@ -3888,3 +3888,87 @@ p {
   }
 }
 
+/* ——— Automation success + interest form ——— */
+.panel--success-flow {
+  border-top: 3px solid var(--wa);
+}
+
+.success-flow__lead {
+  color: var(--ink-soft);
+  max-width: 62ch;
+  margin: 0.65rem 0 1.25rem;
+  line-height: 1.6;
+}
+
+.success-flow__steps {
+  list-style: none;
+  margin: 0 0 1.4rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.success-flow__steps li {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0.9rem 1rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.success-flow__steps strong {
+  color: var(--jac-red);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.success-flow__steps span {
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.interest-form {
+  margin-top: 1.1rem;
+  padding: 1.15rem 1.2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--white);
+  display: grid;
+  gap: 0.9rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.interest-form strong {
+  display: block;
+  margin: 0.2rem 0 0.35rem;
+  font-size: 1.05rem;
+}
+
+.interest-form p {
+  color: var(--steel);
+  font-size: 0.9rem;
+}
+
+.interest-form__fields {
+  display: grid;
+  grid-template-columns: 1.1fr 1.1fr auto;
+  gap: 0.65rem;
+  align-items: end;
+}
+
+.interest-form--done {
+  border-color: rgba(18, 140, 126, 0.35);
+  background: rgba(18, 140, 126, 0.06);
+}
+
+@media (max-width: 900px) {
+  .success-flow__steps,
+  .interest-form__fields {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,7 +1,7 @@
 const ITEMS = [
-  { title: 'Prix catalogue', text: 'Affiché dès le devis WhatsApp' },
-  { title: 'Couleur & options', text: 'Teinte et accessoires inclus' },
-  { title: 'Essai / Meet', text: 'Créneaux clairs, lien Meet auto' },
+  { title: 'Devis PDF auto', text: 'Confirmation puis document tamponné' },
+  { title: 'Couleur & options', text: 'Inclus dans le dossier client' },
+  { title: 'Essai / Meet', text: 'WhatsApp automatique au client' },
   { title: 'Après-vente', text: 'Garantie · pièces · atelier' },
 ]
 

@@ -1,16 +1,8 @@
 import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
-import { ReplyBox } from '../components/ReplyBox'
 import { models, showrooms } from '../data/content'
-import {
-  CONTACT,
-  buildDevisReplyText,
-  buildDevisReplyWhatsAppUrl,
-  buildDevisRequestText,
-  buildDevisWhatsAppUrl,
-  openWhatsApp,
-  type DevisInput,
-} from '../lib/contact'
+import { delayLabel, submitDevisLead } from '../lib/api'
+import { CONTACT, buildDevisRequestText, type DevisInput } from '../lib/contact'
 import {
   QUOTE_PACKAGES,
   colorById,
@@ -29,6 +21,14 @@ type DevisForm = {
   optionIds: string[]
 }
 
+type SentState = {
+  payload: DevisInput
+  leadId: string
+  pdfUrl: string
+  pdfDelayMs: number
+  whatsappMode: string
+}
+
 const initial: DevisForm = {
   modele: 'T8 PRO',
   showroomId: 'clh',
@@ -42,7 +42,8 @@ const initial: DevisForm = {
 export function DevisPage() {
   const [form, setForm] = useState<DevisForm>(initial)
   const [error, setError] = useState('')
-  const [sent, setSent] = useState<DevisInput | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [sent, setSent] = useState<SentState | null>(null)
 
   const showroomName = useMemo(
     () => showrooms.find((s) => s.id === form.showroomId)?.name ?? 'Showroom',
@@ -82,7 +83,7 @@ export function DevisPage() {
     }))
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
 
@@ -106,8 +107,25 @@ export function DevisPage() {
       optionIds: form.optionIds,
     }
 
-    openWhatsApp(buildDevisWhatsAppUrl(payload))
-    setSent(payload)
+    setSubmitting(true)
+    const result = await submitDevisLead({
+      ...payload,
+      showroom: showroomName,
+    })
+    setSubmitting(false)
+
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+
+    setSent({
+      payload,
+      leadId: result.data.leadId,
+      pdfUrl: result.data.pdfUrl,
+      pdfDelayMs: result.data.pdfDelayMs,
+      whatsappMode: result.data.whatsapp.mode,
+    })
   }
 
   return (
@@ -115,91 +133,99 @@ export function DevisPage() {
       <header className="page-hero">
         <div className="page-hero__grid">
           <div>
-            <p className="section__eyebrow page-hero__eyebrow">Devis WhatsApp</p>
-            <h1>Prix, couleur, options — prêts à envoyer.</h1>
+            <p className="section__eyebrow page-hero__eyebrow">Devis automatisé</p>
+            <h1>Demandez. Recevez le PDF. C’est tout.</h1>
             <p className="page-hero__lead">
-              Composez un devis professionnel avec catalogue, teinte, accessoires et
-              financement. WhatsApp s’ouvre vers {CONTACT.whatsappDisplay}.
+              Choisissez modèle, couleur et options. Vous recevez d’abord une confirmation
+              WhatsApp, puis le devis PDF professionnel est envoyé automatiquement sur votre
+              numéro.
             </p>
           </div>
           <div className="page-hero__aside">
-            <span>Ligne WhatsApp</span>
-            <strong className="page-hero__aside-phone">{CONTACT.whatsappLabel}</strong>
-            <p>{CONTACT.whatsappDisplay} · devis &amp; réponses clients</p>
+            <span>Workflow JAC</span>
+            <strong className="page-hero__aside-phone">PDF auto</strong>
+            <p>Confirmation → document tamponné · WhatsApp client</p>
           </div>
         </div>
       </header>
 
       <section className="section commerce">
         {sent ? (
-          <article className="panel panel--ticket">
-            <p className="section__eyebrow">WhatsApp ouvert</p>
-            <h2>Devis professionnel prêt</h2>
+          <article className="panel panel--ticket panel--success-flow">
+            <p className="section__eyebrow">Demande enregistrée</p>
+            <h2>Merci — votre devis est en route.</h2>
+            <p className="success-flow__lead">
+              Votre demande a bien été prise en compte. Un message de confirmation part sur
+              WhatsApp <strong>{sent.payload.telephone}</strong>. Le document PDF
+              professionnel (prix, specs, couleur, options, tampon JAC) suivra
+              automatiquement sous environ <strong>{delayLabel(sent.pdfDelayMs)}</strong>.
+            </p>
+
+            <ol className="success-flow__steps">
+              <li>
+                <strong>Maintenant</strong>
+                <span>Confirmation WhatsApp au client</span>
+              </li>
+              <li>
+                <strong>Sous peu</strong>
+                <span>Envoi automatique du PDF tamponné</span>
+              </li>
+              <li>
+                <strong>Ensuite</strong>
+                <span>Un conseiller peut préciser stock / essai</span>
+              </li>
+            </ol>
+
             <dl className="ticket-grid">
               <div>
-                <dt>Nom</dt>
-                <dd>{sent.nom}</dd>
-              </div>
-              <div>
-                <dt>Téléphone</dt>
-                <dd>{sent.telephone}</dd>
+                <dt>Référence</dt>
+                <dd>{sent.leadId}</dd>
               </div>
               <div>
                 <dt>Modèle</dt>
-                <dd>JAC {sent.modele}</dd>
+                <dd>JAC {sent.payload.modele}</dd>
               </div>
               <div>
                 <dt>Prix indicatif</dt>
-                <dd>{QUOTE_PACKAGES[sent.modele].priceLabel}</dd>
+                <dd>{QUOTE_PACKAGES[sent.payload.modele].priceLabel}</dd>
               </div>
               <div>
                 <dt>Couleur</dt>
-                <dd>{colorById(sent.couleurId ?? '')?.name ?? '—'}</dd>
+                <dd>{colorById(sent.payload.couleurId ?? '')?.name ?? '—'}</dd>
               </div>
               <div>
                 <dt>Options</dt>
                 <dd>
-                  {optionLabels(sent.optionIds ?? []).join(', ') || 'Aucune sélectionnée'}
+                  {optionLabels(sent.payload.optionIds ?? []).join(', ') ||
+                    'Aucune sélectionnée'}
                 </dd>
               </div>
               <div>
                 <dt>Showroom</dt>
-                <dd>{sent.showroom}</dd>
-              </div>
-              <div>
-                <dt>Besoin</dt>
-                <dd>{sent.besoin}</dd>
-              </div>
-              <div className="ticket-grid__full">
-                <dt>Version</dt>
-                <dd>{QUOTE_PACKAGES[sent.modele].version}</dd>
+                <dd>{sent.payload.showroom}</dd>
               </div>
             </dl>
-            <ReplyBox
-              title="Devis complet à renvoyer au client"
-              replyText={buildDevisReplyText(sent)}
-              replyWhatsAppUrl={buildDevisReplyWhatsAppUrl(sent)}
-              clientLabel={sent.telephone}
-            />
 
             <div className="panel__actions panel__actions--row">
-              <a
-                className="btn btn--whatsapp"
-                href={buildDevisWhatsAppUrl(sent)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Rouvrir la demande
+              <a className="btn btn--primary" href={sent.pdfUrl} target="_blank" rel="noreferrer">
+                Télécharger le PDF
               </a>
-              <button type="button" className="btn btn--outline" onClick={() => setSent(null)}>
-                Nouveau devis
-              </button>
-              <Link className="btn btn--primary" to="/visite?mode=essai">
+              <Link className="btn btn--outline" to="/visite?mode=essai">
                 Réserver un essai
               </Link>
+              <button
+                type="button"
+                className="btn btn--ghost-dark"
+                onClick={() => setSent(null)}
+              >
+                Nouvelle demande
+              </button>
             </div>
             <p className="form-hint">
-              1) Le client envoie la demande → 2) Vous renvoyez la réponse suggérée ci-dessus.
+              Mode WhatsApp : <strong>{sent.whatsappMode}</strong>
+              {sent.whatsappMode === 'dry-run'
+                ? ' — configurez WHATSAPP_TOKEN pour l’envoi réel (voir AUTOMATION.md).'
+                : ' — messages et PDF partent via l’API WhatsApp Business.'}
             </p>
           </article>
         ) : (
@@ -256,7 +282,7 @@ export function DevisPage() {
                 </label>
 
                 <label className="field">
-                  <span>Téléphone</span>
+                  <span>WhatsApp (Tunisie)</span>
                   <input
                     required
                     value={form.telephone}
@@ -295,7 +321,9 @@ export function DevisPage() {
                       title={c.name}
                       onClick={() => setForm((f) => ({ ...f, couleurId: c.id }))}
                     >
-                      <span className={c.light ? 'color-swatch__check light' : 'color-swatch__check'}>
+                      <span
+                        className={c.light ? 'color-swatch__check light' : 'color-swatch__check'}
+                      >
                         {form.couleurId === c.id ? '✓' : ''}
                       </span>
                       <em>{c.name}</em>
@@ -332,12 +360,12 @@ export function DevisPage() {
               {error && <p className="form-error">{error}</p>}
 
               <div className="panel__actions">
-                <button type="submit" className="btn btn--whatsapp">
-                  Envoyer le devis sur WhatsApp
+                <button type="submit" className="btn btn--whatsapp" disabled={submitting}>
+                  {submitting ? 'Envoi en cours…' : 'Recevoir mon devis PDF'}
                 </button>
                 <p className="form-hint">
-                  Étape suivante : WhatsApp s’ouvre → vous validez l’envoi vers{' '}
-                  {CONTACT.whatsappLabel}.
+                  Pas de second message manuel. Confirmation immédiate, puis PDF automatique
+                  sur votre WhatsApp.
                 </p>
               </div>
             </form>
@@ -376,34 +404,14 @@ export function DevisPage() {
                 </ul>
               )}
 
-              <div className="finance-teaser">
-                <p className="finance-teaser__label">Financement indicatif</p>
-                <ul>
-                  {quote.financingExamples.map((ex) => (
-                    <li key={`${ex.apportPct}-${ex.durationMonths}`}>
-                      <strong>
-                        ~{ex.monthlyFromDt.toLocaleString('fr-TN')} DT
-                        <small>/mois</small>
-                      </strong>
-                      <span>
-                        apport ~{ex.apportPct}% · {ex.durationMonths} mois
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-                <p className="finance-teaser__note">
-                  Choisissez « Devis + financement » pour l’inclure dans WhatsApp.
-                </p>
-              </div>
               <ul className="aside-list">
-                <li>Prix catalogue inclus dans le message</li>
-                <li>Couleur + options sélectionnées</li>
-                <li>Specs + points forts</li>
-                <li>Financement si demandé</li>
-                <li>Réponse pro prête après envoi</li>
+                <li>PDF tamponné JAC généré par le serveur</li>
+                <li>Confirmation WhatsApp automatique</li>
+                <li>Envoi différé du document au client</li>
+                <li>Notification dealer en parallèle</li>
               </ul>
               <details className="preview-details">
-                <summary>Voir le texte WhatsApp</summary>
+                <summary>Voir le résumé dossier</summary>
                 <pre className="reply-box__text reply-box__text--compact">
                   {buildDevisRequestText(previewPayload)}
                 </pre>
