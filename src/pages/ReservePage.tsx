@@ -165,11 +165,9 @@ export function ReservePage() {
     return (
       <>
         <header className="page-hero">
-          <p className="section__eyebrow" style={{ color: '#ff6b73' }}>
-            Confirmation sécurisée
-          </p>
+          <p className="section__eyebrow page-hero__eyebrow">Confirmation sécurisée</p>
           <h1>Ticket enregistré</h1>
-          <p>
+          <p className="page-hero__lead">
             Conservez ce ticket. Présentez-le à l’accueil et confirmez idéalement
             par téléphone.
           </p>
@@ -271,18 +269,22 @@ export function ReservePage() {
   return (
     <>
       <header className="page-hero">
-        <p className="section__eyebrow" style={{ color: '#ff6b73' }}>
-          Service atelier · protégé
-        </p>
+        <p className="section__eyebrow page-hero__eyebrow">Service atelier · protégé</p>
         <h1>Réserver un entretien</h1>
-        <p>
+        <p className="page-hero__lead">
           Formulaire sécurisé sans compte : validation des champs, anti-abus,
           consentement, ticket scellé stocké uniquement sur votre appareil.
         </p>
         <div className="reserve-steps" aria-label="Étapes de réservation">
-          <span className="active"><b>01</b> Vos coordonnées</span>
-          <span><b>02</b> Votre besoin</span>
-          <span><b>03</b> Créneau atelier</span>
+          <span className="active">
+            <b>01</b> Vos coordonnées
+          </span>
+          <span>
+            <b>02</b> Votre besoin
+          </span>
+          <span>
+            <b>03</b> Créneau atelier
+          </span>
         </div>
       </header>
 

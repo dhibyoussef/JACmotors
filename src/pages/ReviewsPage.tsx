@@ -23,22 +23,35 @@ export function ReviewsPage() {
   return (
     <>
       <header className="page-hero">
-        <p className="section__eyebrow" style={{ color: '#ff6b73' }}>
-          Google Reviews
-        </p>
-        <h1>Avis clients</h1>
-        <p>
-          Retours réels des showrooms JAC en Tunisie — transparence pour mieux
-          servir.
-        </p>
+        <div className="page-hero__grid">
+          <div>
+            <p className="section__eyebrow page-hero__eyebrow">Google Reviews</p>
+            <h1>Avis clients</h1>
+            <p className="page-hero__lead">
+              Retours réels des showrooms JAC en Tunisie — transparence pour mieux
+              servir.
+            </p>
+          </div>
+          <div className="page-hero__aside">
+            <span>Note moyenne</span>
+            <strong>
+              {avg.toFixed(1)}
+              <small>/5</small>
+            </strong>
+            <p>{reviews.length} avis affichés · sources Google</p>
+          </div>
+        </div>
       </header>
 
-      <section className="section">
+      <section className="section reviews-section">
         <div className="rating-summary">
           <div className="rating-summary__score">{avg.toFixed(1)}</div>
           <div>
-            <div className="stars">{'★'.repeat(Math.round(avg))}{'☆'.repeat(5 - Math.round(avg))}</div>
-            <p style={{ color: 'var(--steel)', marginTop: '0.35rem' }}>
+            <div className="stars">
+              {'★'.repeat(Math.round(avg))}
+              {'☆'.repeat(5 - Math.round(avg))}
+            </div>
+            <p className="rating-summary__meta">
               Moyenne sur {reviews.length} avis affichés (sources Google)
             </p>
           </div>

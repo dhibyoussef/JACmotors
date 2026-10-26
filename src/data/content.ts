@@ -157,17 +157,17 @@ export const models: CarModel[] = [
     name: 'T8',
     officialUrl: 'https://pickup.jac.com.cn/jhT8/',
     tagline:
-      'Pickup double cabine JAC — version Tunisie 4×4 / RWD. Photos officielles Jianghuai Pickup.',
+      'Pickup double cabine robuste — versions 4×2 et 4×4 pour le travail et la route tunisienne.',
     drive: '4×2 / 4×4',
-    highlight: '江淮 T8 · pickup.jac.com.cn',
-    heroImage: '/images/jac/t8-b.jpg',
+    highlight: 'Gamme pickup · JAC Tunisie',
+    heroImage: '/images/jac/t8-a.jpg',
     gallery: [
-      '/images/jac/t8-b.jpg',
       '/images/jac/t8-a.jpg',
       '/images/jac/t8-c.jpg',
       '/images/jac/t8-d.jpg',
       '/images/jac/t8-e.jpg',
       '/images/jac/t8-f.jpg',
+      '/images/jac/t8-b.jpg',
     ],
     engines: [
       {
@@ -180,7 +180,7 @@ export const models: CarModel[] = [
       { label: 'Carrosserie', value: 'Pickup double cabine' },
       { label: 'Transmission', value: '4×2 / 4×4 (selon version)' },
       { label: 'Positionnement', value: 'Pickup commercial / lifestyle' },
-      { label: 'Source photos', value: 'pickup.jac.com.cn/jhT8' },
+      { label: 'Usage', value: 'Commercial & lifestyle' },
     ],
     features: [
       'Grille hexagonale JAC',
@@ -189,16 +189,16 @@ export const models: CarModel[] = [
       'Disponible en Tunisie (réseau local)',
     ],
     sourceNote:
-      'Images : site officiel Jianghuai Pickup (江淮T8). Configurations exactes Tunisie à confirmer auprès des showrooms listés.',
+      'Spécifications et photos à titre indicatif. La configuration exacte en Tunisie se confirme en showroom.',
   },
   {
     id: 't8pro',
     name: 'T8 PRO',
     officialUrl: 'https://jacen.jac.com.cn/models/t8pro/',
     tagline:
-      'Full-range update in style, comfort, stability, safety and power — 8th generation international platform.',
+      'Style, confort, stabilité et puissance — le pickup premium pour la route et le terrain.',
     drive: 'RWD / 4WD',
-    highlight: 'Official JAC Motors · jacen.jac.com.cn',
+    highlight: 'Le choix premium · JAC Tunisie',
     heroImage: '/images/jac/hero-t8pro.jpg',
     gallery: [
       '/images/jac/hero-t8pro.jpg',
@@ -257,7 +257,7 @@ export const models: CarModel[] = [
       'Structure cage · acier haute résistance 43%',
     ],
     sourceNote:
-      'Spécifications et photos : JAC Motors officiel https://jacen.jac.com.cn/models/t8pro/ — à titre indicatif ; config Tunisie chez le concessionnaire.',
+      'Spécifications et photos à titre indicatif. Prix, stock et équipements Tunisie à confirmer auprès du concessionnaire.',
   },
 ]
 

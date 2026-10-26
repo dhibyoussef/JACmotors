@@ -16,26 +16,27 @@ Il faut installer Node.js sur la machine, ouvrir un terminal dans le dossier du 
 
 ```bash
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-Vite démarre alors le serveur local et affiche l’adresse du site dans le terminal. Pour créer une version optimisée destinée à la production, utiliser :
+Cela démarre Vite (site) et le serveur d’automation WhatsApp + PDF. Voir `AUTOMATION.md` pour Docker, PM2 et WhatsApp Cloud API.
+
+Production always-on (API + site) :
 
 ```bash
 npm run build
+npm start
 ```
 
-La commande de production vérifie d’abord TypeScript puis génère les fichiers optimisés dans le dossier `dist`. Pour tester ce dossier localement, utiliser :
-
-```bash
-npm run preview
-```
+Ou : `docker compose up -d --build`.
 
 ## Commandes disponibles
 
-- `npm run dev` démarre le serveur Vite avec rechargement automatique.
-- `npm run build` vérifie le typage et crée la version de production.
-- `npm run preview` sert la version construite afin de la tester comme un site publié.
+- `npm run dev` — Vite + API automation (proxy `/api`).
+- `npm run build` — typage + build `dist`.
+- `npm start` — serveur always-on (API + `dist`).
+- `npm run test:messages` / `npm run test:api` — tests messages et workflow.
 
 ## Organisation des dossiers
 
