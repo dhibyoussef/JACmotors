@@ -72,8 +72,23 @@ Without credentials the server runs in **dry-run**: messages are written to `ser
 | POST | `/api/leads/visite` | Visit / essai / Meet ack |
 | POST | `/api/leads/interest` | 360 / showroom interest |
 | GET | `/api/pdfs/:name` | Download generated PDF |
+| GET | `/api/appointments/slots` | Public checkup slots |
+| POST | `/api/appointments/public` | Public checkup booking |
+| POST | `/api/admin/login` | Staff login (token) |
+| GET | `/api/admin/dashboard` | Ops stats |
+| GET/POST | `/api/admin/clients` | Manage clients |
+| GET/POST | `/api/admin/users` | Manage staff users |
+| GET/POST/PATCH | `/api/admin/appointments` | Calendar / checkups |
+| GET | `/api/admin/documents` | Devis PDFs ready for client |
 | GET | `/api/admin/leads` | Recent leads |
 | GET | `/api/admin/jobs` | Delayed jobs |
+
+## Branded admin UI
+
+- Route: `/admin` (same JAC red/black theme as the public site)
+- Default staff: `admin@jacmotors.tn` / `JacMotors2026!`
+- Modules: dashboard, leads, clients, calendar RDV, documents, users, WhatsApp queue
+- Public checkup calendar: `/apres-vente#checkup`
 
 ## Frontend hosting
 

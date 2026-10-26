@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { insertLead } from './db.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 export const DATA_DIR = path.resolve(__dirname, '../data')
@@ -38,6 +39,11 @@ export async function saveLead(lead) {
   const leads = await readJson(LEADS_FILE, [])
   leads.unshift(lead)
   await writeJson(LEADS_FILE, leads.slice(0, 500))
+  try {
+    await insertLead(lead)
+  } catch (err) {
+    console.error('[db] insertLead failed', err?.message || err)
+  }
   return lead
 }
 

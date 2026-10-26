@@ -9,11 +9,13 @@ import { PrivacyPage } from './pages/PrivacyPage'
 import { DevisPage } from './pages/DevisPage'
 import { VisitPage } from './pages/VisitPage'
 import { AfterSalesPage } from './pages/AfterSalesPage'
+import { AdminPage } from './pages/AdminPage'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="admin/*" element={<AdminPage />} />
         <Route element={<Layout />}>
           <Route index element={<HomePage />} />
           <Route path="modeles" element={<ModelsPage />} />

@@ -33,10 +33,11 @@ export function Layout() {
       '/devis': 'Demander un devis · JAC Tunisie',
       '/visite': 'Visite showroom · JAC Tunisie',
       '/reserver': 'Réserver un entretien · JAC Tunisie',
-      '/apres-vente': 'Après-vente · JAC Tunisie',
+      '/apres-vente': 'Après-vente & check-up · JAC Tunisie',
       '/showrooms': 'Showrooms · JAC Tunisie',
       '/avis': 'Avis clients · JAC Tunisie',
       '/confidentialite': 'Confidentialité · JAC Tunisie',
+      '/admin': 'Admin · JAC Tunisie',
     }
     document.title = titles[location.pathname] ?? 'JAC Motors Tunisie'
   }, [location.pathname])
@@ -156,6 +157,9 @@ export function Layout() {
               </li>
               <li>
                 <NavLink to="/confidentialite">Confidentialité</NavLink>
+              </li>
+              <li>
+                <NavLink to="/admin">Espace admin</NavLink>
               </li>
             </ul>
           </div>

@@ -22,6 +22,23 @@ import {
   newId,
   saveLead,
 } from './lib/store.mjs'
+import {
+  authStaff,
+  createAppointment,
+  createUser,
+  dashboardStats,
+  dbHealth,
+  initDb,
+  listAppointments,
+  listClients,
+  listDocuments,
+  listLeadsDb,
+  listUsers,
+  loginStaff,
+  updateAppointmentStatus,
+  upsertClient,
+} from './lib/db.mjs'
+import { n8nStatus } from './lib/n8n.mjs'
 import { sendDocumentMessage, sendTextMessage, whatsappStatus } from './lib/whatsapp.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -56,23 +73,224 @@ setJobHandler(async (job) => {
   console.log(`[workflow] PDF sent to ${client} for ${lead.ref}`)
 })
 
-app.get('/api/health', (_req, res) => {
+app.get('/api/health', async (_req, res) => {
+  const db = await dbHealth()
   res.json({
     ok: true,
     service: 'jacmotors-automation',
     whatsapp: whatsappStatus(),
+    n8n: n8nStatus(),
+    database: db,
     pdfDelayMs: PDF_DELAY_MS,
     publicBaseUrl: PUBLIC_BASE_URL,
     uptimeSec: Math.round(process.uptime()),
   })
 })
 
-app.get('/api/admin/leads', async (_req, res) => {
-  res.json({ ok: true, leads: await listLeads(100) })
+async function requireAdmin(req, res, next) {
+  try {
+    const header = req.headers.authorization || ''
+    const token = header.startsWith('Bearer ')
+      ? header.slice(7)
+      : String(req.headers['x-admin-token'] || '')
+    const user = await authStaff(token)
+    if (!user) return bad(res, 401, 'Session admin invalide. Reconnectez-vous.')
+    req.admin = user
+    next()
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Auth error')
+  }
+}
+
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const email = String(req.body?.email || '').trim()
+    const password = String(req.body?.password || '')
+    const session = await loginStaff(email, password)
+    if (!session) return bad(res, 401, 'Email ou mot de passe incorrect.')
+    res.json({ ok: true, ...session })
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Login error')
+  }
 })
 
-app.get('/api/admin/jobs', async (_req, res) => {
+app.get('/api/admin/me', requireAdmin, (req, res) => {
+  res.json({ ok: true, user: req.admin })
+})
+
+app.get('/api/admin/dashboard', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, stats: await dashboardStats() })
+})
+
+app.get('/api/admin/leads', requireAdmin, async (_req, res) => {
+  try {
+    const dbLeads = await listLeadsDb(200)
+    return res.json({ ok: true, source: 'postgres', leads: dbLeads })
+  } catch {
+    res.json({ ok: true, source: 'file', leads: await listLeads(100) })
+  }
+})
+
+app.get('/api/admin/clients', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, clients: await listClients(300) })
+})
+
+app.post('/api/admin/clients', requireAdmin, async (req, res) => {
+  try {
+    const nom = String(req.body?.nom || '').trim()
+    const telephone = String(req.body?.telephone || '').trim()
+    if (nom.length < 2) return bad(res, 400, 'Nom requis.')
+    if (!isValidTnPhone(telephone)) return bad(res, 400, 'Téléphone invalide.')
+    const client = await upsertClient({
+      nom,
+      telephone,
+      email: req.body?.email,
+      modele: req.body?.modele,
+      matricule: req.body?.matricule,
+      notes: req.body?.notes,
+    })
+    res.json({ ok: true, client })
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Client error')
+  }
+})
+
+app.get('/api/admin/users', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, users: await listUsers() })
+})
+
+app.post('/api/admin/users', requireAdmin, async (req, res) => {
+  try {
+    if (req.admin.role !== 'admin') return bad(res, 403, 'Réservé aux administrateurs.')
+    const nom = String(req.body?.nom || '').trim()
+    const email = String(req.body?.email || '').trim()
+    if (nom.length < 2 || !email.includes('@')) return bad(res, 400, 'Nom et email requis.')
+    const user = await createUser({
+      nom,
+      email,
+      password: String(req.body?.password || 'JacMotors2026!'),
+      role: req.body?.role === 'admin' ? 'admin' : 'conseiller',
+    })
+    res.json({ ok: true, user })
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'User error')
+  }
+})
+
+app.get('/api/admin/appointments', requireAdmin, async (req, res) => {
+  res.json({
+    ok: true,
+    appointments: await listAppointments({
+      from: req.query.from || null,
+      to: req.query.to || null,
+    }),
+  })
+})
+
+app.post('/api/admin/appointments', requireAdmin, async (req, res) => {
+  try {
+    const body = req.body || {}
+    const nom = String(body.nom || '').trim()
+    const telephone = String(body.telephone || '').trim()
+    if (nom.length < 2) return bad(res, 400, 'Nom requis.')
+    if (!isValidTnPhone(telephone)) return bad(res, 400, 'Téléphone invalide.')
+    if (!body.date || !body.time) return bad(res, 400, 'Date et heure requises.')
+    const appointment = await createAppointment(body)
+    res.json({ ok: true, appointment })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Appointment error'
+    if (/unique|duplicate/i.test(msg)) {
+      return bad(res, 409, 'Ce créneau est déjà pris.')
+    }
+    bad(res, 500, msg)
+  }
+})
+
+app.patch('/api/admin/appointments/:id', requireAdmin, async (req, res) => {
+  try {
+    const status = String(req.body?.status || '')
+    if (!['pending', 'confirmed', 'done', 'cancelled'].includes(status)) {
+      return bad(res, 400, 'Statut invalide.')
+    }
+    const appointment = await updateAppointmentStatus(req.params.id, status)
+    if (!appointment) return bad(res, 404, 'RDV introuvable.')
+    res.json({ ok: true, appointment })
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Update error')
+  }
+})
+
+app.get('/api/admin/documents', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, documents: await listDocuments(200) })
+})
+
+app.get('/api/admin/jobs', requireAdmin, async (_req, res) => {
   res.json({ ok: true, jobs: await listJobs(100) })
+})
+
+/** Public checkup booking (client picks a date) */
+app.post('/api/appointments/public', async (req, res) => {
+  try {
+    const body = req.body || {}
+    const nom = String(body.nom || '').trim()
+    const telephone = String(body.telephone || '').trim()
+    if (nom.length < 2) return bad(res, 400, 'Indiquez votre nom.')
+    if (!isValidTnPhone(telephone)) {
+      return bad(res, 400, 'Téléphone tunisien invalide (ex. 99 757 218)')
+    }
+    if (!body.date || !body.time) return bad(res, 400, 'Choisissez une date et un créneau.')
+    const appointment = await createAppointment({
+      ...body,
+      type: body.type || 'checkup',
+      status: 'pending',
+    })
+    await sendTextMessage(
+      toE164(telephone),
+      [
+        '*JAC MOTORS TUNISIE*',
+        '────────────────',
+        '*RDV ATELIER / CHECK-UP*',
+        '',
+        `Bonjour *${nom.split(/\s+/)[0]}*,`,
+        '',
+        'Votre demande de rendez-vous est enregistrée :',
+        `• Réf. : *${appointment.id}*`,
+        `• Date : *${appointment.date}*`,
+        `• Heure : *${appointment.time}*`,
+        appointment.matricule ? `• Matricule : ${appointment.matricule}` : null,
+        '',
+        'Un conseiller confirmera sous peu.',
+        '',
+        '*JAC Motors Tunisie*',
+      ]
+        .filter(Boolean)
+        .join('\n'),
+    )
+    await sendTextMessage(
+      DEALER_E164,
+      `*NOUVEAU RDV ATELIER*\n${appointment.id}\n${appointment.nom} · ${appointment.telephone}\n${appointment.date} ${appointment.time}`,
+    )
+    res.json({ ok: true, appointment })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Erreur RDV'
+    if (/unique|duplicate/i.test(msg)) return bad(res, 409, 'Ce créneau est déjà pris.')
+    bad(res, 500, msg)
+  }
+})
+
+app.get('/api/appointments/slots', async (req, res) => {
+  const date = String(req.query.date || '')
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return bad(res, 400, 'Date invalide.')
+  const slots = ['08:30', '10:00', '11:30', '14:00', '15:30', '17:00']
+  const taken = await listAppointments({ from: date, to: date })
+  const busy = new Set(
+    taken.filter((a) => a.status !== 'cancelled').map((a) => a.time),
+  )
+  res.json({
+    ok: true,
+    date,
+    slots: slots.map((time) => ({ time, taken: busy.has(time) })),
+  })
 })
 
 app.get('/api/pdfs/:name', (req, res) => {
@@ -299,11 +517,18 @@ if (existsSync(DIST)) {
 }
 
 await initStore()
+try {
+  const db = await initDb()
+  console.log(`[db] ready ${db.databaseUrl}`)
+} catch (err) {
+  console.error('[db] init failed — file store only', err?.message || err)
+}
 await restoreJobs()
 
 app.listen(PORT, () => {
   console.log(`JAC automation server on http://127.0.0.1:${PORT}`)
   console.log(`WhatsApp mode: ${whatsappStatus().mode}`)
   console.log(`PDF delay: ${PDF_DELAY_MS}ms`)
+  console.log(`n8n webhooks: ${n8nStatus().webhookBase}`)
   console.log(`Data dir: ${DATA_DIR}`)
 })
