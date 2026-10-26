@@ -4272,6 +4272,12 @@ p {
   margin-bottom: 1.25rem;
 }
 
+.admin-main__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
 .admin-main__head h1 {
   margin: 0.15rem 0 0;
   font-family: var(--font-display);

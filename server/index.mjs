@@ -165,15 +165,31 @@ app.post('/api/admin/users', requireAdmin, async (req, res) => {
     const nom = String(req.body?.nom || '').trim()
     const email = String(req.body?.email || '').trim()
     if (nom.length < 2 || !email.includes('@')) return bad(res, 400, 'Nom et email requis.')
+    const allowedRoles = new Set(['admin', 'sub_admin', 'under_admin', 'conseiller'])
+    const role = allowedRoles.has(String(req.body?.role || ''))
+      ? String(req.body.role)
+      : 'under_admin'
     const user = await createUser({
       nom,
       email,
       password: String(req.body?.password || 'JacMotors2026!'),
-      role: req.body?.role === 'admin' ? 'admin' : 'conseiller',
+      role,
     })
     res.json({ ok: true, user })
   } catch (err) {
     bad(res, 500, err instanceof Error ? err.message : 'User error')
+  }
+})
+
+/** Demo seed — fills staff / clients / leads / RDV / PDFs (idempotent-ish) */
+app.post('/api/admin/seed-demo', requireAdmin, async (req, res) => {
+  try {
+    if (req.admin.role !== 'admin') return bad(res, 403, 'Réservé aux administrateurs.')
+    const { seedDemo } = await import('./lib/seed-demo.mjs')
+    const result = await seedDemo({ force: Boolean(req.body?.force) })
+    res.json({ ok: true, ...result })
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Seed error')
   }
 })
 

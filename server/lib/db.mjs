@@ -113,19 +113,33 @@ export async function initDb() {
       );
     `)
 
-    const { rows } = await client.query('SELECT COUNT(*)::int AS c FROM staff_users')
-    if (rows[0].c === 0) {
-      await client.query(
-        `INSERT INTO staff_users (id, nom, email, password_hash, role)
-         VALUES ($1,$2,$3,$4,'admin')`,
-        [
-          'USR-ADMIN',
-          'JAC Admin',
-          'admin@jacmotors.tn',
-          hashPassword('JacMotors2026!'),
-        ],
-      )
-    }
+    // seed core staff (admin / sub / under) — upsert by email
+    await client.query(
+      `INSERT INTO staff_users (id, nom, email, password_hash, role)
+       VALUES
+         ($1,$2,$3,$4,'admin'),
+         ($5,$6,$7,$8,'sub_admin'),
+         ($9,$10,$11,$12,'under_admin')
+       ON CONFLICT (email) DO UPDATE SET
+         nom = EXCLUDED.nom,
+         role = EXCLUDED.role,
+         password_hash = EXCLUDED.password_hash,
+         active = TRUE`,
+      [
+        'USR-ADMIN',
+        'JAC Admin',
+        'admin@jacmotors.tn',
+        hashPassword('JacMotors2026!'),
+        'USR-SUB',
+        'Sami Sub-Admin',
+        'subadmin@jacmotors.tn',
+        hashPassword('JacMotors2026!'),
+        'USR-UNDER',
+        'Ines Under-Admin',
+        'underadmin@jacmotors.tn',
+        hashPassword('JacMotors2026!'),
+      ],
+    )
 
     return { ok: true, databaseUrl: DATABASE_URL.replace(/:[^:@/]+@/, ':***@') }
   } finally {
@@ -303,19 +317,65 @@ export async function listUsers() {
 }
 
 export async function createUser(input) {
-  const id = `USR-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
+  const id = input.id || `USR-${crypto.randomBytes(3).toString('hex').toUpperCase()}`
   const { rows } = await getPool().query(
     `INSERT INTO staff_users (id, nom, email, password_hash, role, active)
-     VALUES ($1,$2,$3,$4,$5,TRUE) RETURNING id, nom, email, role, active, created_at`,
+     VALUES ($1,$2,$3,$4,$5,TRUE)
+     ON CONFLICT (email) DO UPDATE SET
+       nom = EXCLUDED.nom,
+       role = EXCLUDED.role,
+       password_hash = EXCLUDED.password_hash,
+       active = TRUE
+     RETURNING id, nom, email, role, active, created_at`,
     [
       id,
       input.nom,
       input.email,
       hashPassword(input.password || 'JacMotors2026!'),
-      input.role || 'conseiller',
+      input.role || 'under_admin',
     ],
   )
   return rows[0]
+}
+
+export async function ensureStaffRoles() {
+  const password = 'JacMotors2026!'
+  const team = [
+    {
+      id: 'USR-ADMIN',
+      nom: 'JAC Admin',
+      email: 'admin@jacmotors.tn',
+      role: 'admin',
+    },
+    {
+      id: 'USR-SUB',
+      nom: 'Sami Sub-Admin',
+      email: 'subadmin@jacmotors.tn',
+      role: 'sub_admin',
+    },
+    {
+      id: 'USR-UNDER',
+      nom: 'Ines Under-Admin',
+      email: 'underadmin@jacmotors.tn',
+      role: 'under_admin',
+    },
+  ]
+  const out = []
+  for (const u of team) {
+    out.push(await createUser({ ...u, password }))
+  }
+  return out
+}
+
+function normalizeDate(value) {
+  if (!value) return value
+  if (value instanceof Date) return value.toISOString().slice(0, 10)
+  return String(value).slice(0, 10)
+}
+
+function mapAppointment(row) {
+  if (!row) return row
+  return { ...row, date: normalizeDate(row.date) }
 }
 
 export async function listAppointments({ from, to, limit = 200 } = {}) {
@@ -327,7 +387,7 @@ export async function listAppointments({ from, to, limit = 200 } = {}) {
      LIMIT $3`,
     [from || null, to || null, limit],
   )
-  return rows
+  return rows.map(mapAppointment)
 }
 
 export async function createAppointment(input) {
@@ -363,7 +423,7 @@ export async function createAppointment(input) {
       input.notes || null,
     ],
   )
-  return rows[0]
+  return mapAppointment(rows[0])
 }
 
 export async function updateAppointmentStatus(id, status) {
@@ -371,7 +431,7 @@ export async function updateAppointmentStatus(id, status) {
     `UPDATE appointments SET status=$2 WHERE id=$1 RETURNING *`,
     [id, status],
   )
-  return rows[0]
+  return mapAppointment(rows[0])
 }
 
 export async function listDocuments(limit = 100) {

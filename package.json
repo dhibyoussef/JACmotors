@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "start": "node server/index.mjs",
     "test:messages": "node scripts/smoke-test.mjs && node scripts/test-devis-messages.mjs",
-    "test:api": "node scripts/test-automation.mjs"
+    "test:api": "node scripts/test-automation.mjs",
+    "seed:demo": "node scripts/seed-demo.mjs"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

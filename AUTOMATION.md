@@ -86,9 +86,15 @@ Without credentials the server runs in **dry-run**: messages are written to `ser
 ## Branded admin UI
 
 - Route: `/admin` (same JAC red/black theme as the public site)
-- Default staff: `admin@jacmotors.tn` / `JacMotors2026!`
+- Staff demo accounts (password `JacMotors2026!` for all):
+  - Admin: `admin@jacmotors.tn`
+  - Sub-admin: `subadmin@jacmotors.tn`
+  - Under-admin: `underadmin@jacmotors.tn`
 - Modules: dashboard, leads, clients, calendar RDV, documents, users, WhatsApp queue
 - Public checkup calendar: `/apres-vente#checkup`
+- Fill demo data: Admin button **Remplir démo** or `npm run seed:demo`
+  - Generates devis PDFs for each model × paint color (+ option packs)
+  - Seeds clients, visite/Meet/essai, 360 interest, check-up RDV, WhatsApp outbox
 
 ## Frontend hosting
 

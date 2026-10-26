@@ -58,9 +58,18 @@ function formatDate(value?: string | null) {
 }
 
 function statusClass(status: string) {
-  if (status === 'confirmed' || status === 'done' || status === 'ack_sent') return 'is-ok'
+  if (status === 'confirmed' || status === 'done' || status === 'ack_sent' || status === 'pdf_sent')
+    return 'is-ok'
   if (status === 'cancelled') return 'is-bad'
   return 'is-warn'
+}
+
+function roleLabel(role: string) {
+  if (role === 'admin') return 'Admin'
+  if (role === 'sub_admin') return 'Sub-admin'
+  if (role === 'under_admin') return 'Under-admin'
+  if (role === 'conseiller') return 'Conseiller'
+  return role
 }
 
 export function AdminPage() {
@@ -101,7 +110,7 @@ export function AdminPage() {
     nom: '',
     email: '',
     password: 'JacMotors2026!',
-    role: 'conseiller',
+    role: 'under_admin',
   })
   const [rdvForm, setRdvForm] = useState({
     nom: '',
@@ -249,9 +258,36 @@ export function AdminPage() {
       nom: '',
       email: '',
       password: 'JacMotors2026!',
-      role: 'conseiller',
+      role: 'under_admin',
     })
     await refresh()
+  }
+
+  async function onSeedDemo() {
+    setError('')
+    setNotice('')
+    try {
+      const token = getAdminToken()
+      const res = await fetch('/api/admin/seed-demo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ force: true }),
+      })
+      const data = (await res.json()) as { ok?: boolean; error?: string; devisPdfs?: number; stats?: DashboardStats }
+      if (!res.ok || data.ok === false) {
+        setError(data.error || 'Seed demo impossible')
+        return
+      }
+      setNotice(
+        `Demo remplie : ${data.devisPdfs ?? 0} devis PDF, clients, RDV, visite/Meet/360, staff.`,
+      )
+      await refresh()
+    } catch {
+      setError('Seed demo injoignable.')
+    }
   }
 
   async function onCreateRdv(e: FormEvent) {
@@ -350,7 +386,7 @@ export function AdminPage() {
         </div>
         <p className="admin-side__user">
           {user.nom}
-          <small>{user.role}</small>
+          <small>{roleLabel(user.role)}</small>
         </p>
         <nav className="admin-side__nav">
           {TABS.map((t) => (
@@ -388,9 +424,16 @@ export function AdminPage() {
             <p className="section__eyebrow">JAC Motors Tunisie</p>
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
           </div>
-          <button type="button" className="btn btn--outline" onClick={() => refresh()}>
-            Actualiser
-          </button>
+          <div className="admin-main__actions">
+            {user.role === 'admin' ? (
+              <button type="button" className="btn btn--primary" onClick={() => onSeedDemo()}>
+                Remplir démo
+              </button>
+            ) : null}
+            <button type="button" className="btn btn--outline" onClick={() => refresh()}>
+              Actualiser
+            </button>
+          </div>
         </header>
 
         {error ? <p className="admin-alert admin-alert--bad">{error}</p> : null}
@@ -862,8 +905,10 @@ export function AdminPage() {
                     value={userForm.role}
                     onChange={(e) => setUserForm({ ...userForm, role: e.target.value })}
                   >
-                    <option value="conseiller">Conseiller</option>
                     <option value="admin">Admin</option>
+                    <option value="sub_admin">Sub-admin</option>
+                    <option value="under_admin">Under-admin</option>
+                    <option value="conseiller">Conseiller</option>
                   </select>
                 </label>
               </div>
@@ -880,7 +925,7 @@ export function AdminPage() {
                       {u.nom} · {u.email}
                     </strong>
                     <span>
-                      {u.role} · {u.active === false ? 'inactif' : 'actif'}
+                      {roleLabel(u.role)} · {u.active === false ? 'inactif' : 'actif'}
                     </span>
                   </li>
                 ))}
