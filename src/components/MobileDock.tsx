@@ -4,7 +4,11 @@ import { Link, useLocation } from 'react-router-dom'
 export function MobileDock() {
   const { pathname } = useLocation()
   const hide =
-    pathname === '/devis' || pathname === '/visite' || pathname === '/reserver'
+    pathname === '/devis' ||
+    pathname === '/visite' ||
+    pathname === '/reserver' ||
+    pathname === '/messagerie' ||
+    pathname.startsWith('/admin')
   if (hide) return null
 
   return (

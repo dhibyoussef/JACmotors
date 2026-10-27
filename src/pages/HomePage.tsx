@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useCms } from '../cms/CmsProvider'
 import { CompareTable } from '../components/CompareTable'
 import { FaqSection } from '../components/FaqSection'
+import { ScrollReveal } from '../components/ScrollReveal'
 import { TrustStrip } from '../components/TrustStrip'
 import { models, reviews } from '../data/content'
 import { modelWithCms, priceLabelFor } from '../lib/cms'
@@ -59,23 +60,25 @@ export function HomePage() {
 
       <TrustStrip />
 
-      <section className="home-strip" aria-label="Points clés">
-        <article>
-          <span className="home-strip__label">L’offre signature</span>
-          <strong>{proPrice.replace(/^à partir de\s+/i, '')}</strong>
-          <p>Prix indicatif du T8 PRO Double Cabine 2.0 L CTI Diesel 4×4.</p>
-        </article>
-        <article>
-          <span className="home-strip__label">La puissance utile</span>
-          <strong>320 Nm</strong>
-          <p>Du couple à bas régime pour travailler, voyager et sortir des sentiers.</p>
-        </article>
-        <article>
-          <span className="home-strip__label">Le réseau local</span>
-          <strong>{cms.showrooms.length || 4} points</strong>
-          <p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p>
-        </article>
-      </section>
+      <ScrollReveal>
+        <section className="home-strip" aria-label="Points clés">
+          <article>
+            <span className="home-strip__label">L’offre signature</span>
+            <strong>{proPrice.replace(/^à partir de\s+/i, '')}</strong>
+            <p>Prix indicatif du T8 PRO Double Cabine 2.0 L CTI Diesel 4×4.</p>
+          </article>
+          <article>
+            <span className="home-strip__label">La puissance utile</span>
+            <strong>320 Nm</strong>
+            <p>Du couple à bas régime pour travailler, voyager et sortir des sentiers.</p>
+          </article>
+          <article>
+            <span className="home-strip__label">Le réseau local</span>
+            <strong>{cms.showrooms.length || 4} points</strong>
+            <p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p>
+          </article>
+        </section>
+      </ScrollReveal>
 
       <section className="section journey">
         <div className="section__head section__head--row">
@@ -88,32 +91,34 @@ export function HomePage() {
             Motors Tunisie.
           </p>
         </div>
-        <ol className="journey__grid">
-          <li>
-            <span>01</span>
-            <h3>Explorez</h3>
-            <p>Comparez T8 &amp; T8 PRO, ouvrez la vue 360° et les fiches techniques.</p>
-            <Link className="text-link" to="/modeles">
-              Voir les modèles <span>↗</span>
-            </Link>
-          </li>
-          <li>
-            <span>02</span>
-            <h3>Demandez un devis</h3>
-            <p>Confirmation WhatsApp, puis PDF professionnel envoyé automatiquement.</p>
-            <Link className="text-link" to="/devis">
-              Ouvrir le devis <span>↗</span>
-            </Link>
-          </li>
-          <li>
-            <span>03</span>
-            <h3>Réservez</h3>
-            <p>Visite, essai routier ou Google Meet — créneau clair, confirmation rapide.</p>
-            <Link className="text-link" to="/visite">
-              Choisir un créneau <span>↗</span>
-            </Link>
-          </li>
-        </ol>
+        <ScrollReveal>
+          <ol className="journey__grid">
+            <li>
+              <span>01</span>
+              <h3>Explorez</h3>
+              <p>Comparez T8 &amp; T8 PRO, ouvrez la vue 360° et les fiches techniques.</p>
+              <Link className="text-link" to="/modeles">
+                Voir les modèles <span>↗</span>
+              </Link>
+            </li>
+            <li>
+              <span>02</span>
+              <h3>Demandez un devis</h3>
+              <p>Confirmation WhatsApp, puis PDF professionnel envoyé automatiquement.</p>
+              <Link className="text-link" to="/devis">
+                Ouvrir le devis <span>↗</span>
+              </Link>
+            </li>
+            <li>
+              <span>03</span>
+              <h3>Réservez</h3>
+              <p>Visite, essai routier ou Google Meet — créneau clair, confirmation rapide.</p>
+              <Link className="text-link" to="/visite">
+                Choisir un créneau <span>↗</span>
+              </Link>
+            </li>
+          </ol>
+        </ScrollReveal>
       </section>
 
       <section className="section home-intro">
@@ -125,6 +130,7 @@ export function HomePage() {
             Comparez les deux silhouettes JAC.
           </p>
         </div>
+        <ScrollReveal>
         <div className="model-feature-grid">
           {liveModels.map((model) => {
             const quote = QUOTE_PACKAGES[model.name as QuoteModel]
@@ -164,9 +170,12 @@ export function HomePage() {
             )
           })}
         </div>
+        </ScrollReveal>
       </section>
 
-      <CompareTable />
+      <ScrollReveal>
+        <CompareTable />
+      </ScrollReveal>
 
       <section className="home-spec-banner">
         <div className="home-spec-banner__copy">

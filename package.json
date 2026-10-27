@@ -13,6 +13,9 @@
     "test:messages": "node scripts/smoke-test.mjs && node scripts/test-devis-messages.mjs",
     "test:api": "node scripts/test-automation.mjs",
     "test:e2e:messagerie": "node scripts/e2e-devis-messagerie.mjs",
+    "test:visual": "node scripts/visual-qa.mjs",
+    "test:all": "npm run test:api && npm run test:messages && npm run build && npm run test:e2e:messagerie && npm run test:visual && npm run audit",
+    "test:quick": "npm run test:api && npm run test:messages && npm run build",
     "audit": "node scripts/full-audit.mjs",
     "seed:demo": "node scripts/seed-demo.mjs"
   },

@@ -397,6 +397,11 @@ export function DevisPage() {
                   sur votre WhatsApp.
                 </p>
               </div>
+              <div className="devis-sticky-cta" aria-hidden="false">
+                <button type="submit" className="btn btn--whatsapp" disabled={submitting}>
+                  {submitting ? 'Envoi…' : 'Recevoir mon devis PDF'}
+                </button>
+              </div>
             </form>
 
             <aside className="panel panel--aside quote-card">

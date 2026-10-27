@@ -4,21 +4,36 @@ import { useCms } from '../cms/CmsProvider'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 import { MobileDock } from './MobileDock'
 
+const ANNOUNCE_KEY = 'jac_hide_announce_v1'
+
 export function Layout() {
   const [open, setOpen] = useState(false)
   const [solid, setSolid] = useState(false)
+  const [hideAnnounce, setHideAnnounce] = useState(() => {
+    try {
+      return sessionStorage.getItem(ANNOUNCE_KEY) === '1'
+    } catch {
+      return false
+    }
+  })
+  const [pageIn, setPageIn] = useState(true)
   const location = useLocation()
   const cms = useCms()
   const isHome = location.pathname === '/'
-  /** Hide FAB on pages that already have a primary WhatsApp send CTA */
   const hideFab =
     location.pathname === '/devis' ||
     location.pathname === '/visite' ||
     location.pathname === '/'
 
+  const waDisplay = cms.settings.whatsapp_display || CONTACT.whatsappDisplay
+  const showAnnounce = Boolean(cms.settings.announcement) && !hideAnnounce
+
   useEffect(() => {
     setOpen(false)
     window.scrollTo(0, 0)
+    setPageIn(false)
+    const t = window.setTimeout(() => setPageIn(true), 30)
+    return () => window.clearTimeout(t)
   }, [location.pathname])
 
   useEffect(() => {
@@ -44,20 +59,37 @@ export function Layout() {
     document.title = titles[location.pathname] ?? 'JAC Motors Tunisie'
   }, [location.pathname])
 
+  function dismissAnnounce() {
+    setHideAnnounce(true)
+    try {
+      sessionStorage.setItem(ANNOUNCE_KEY, '1')
+    } catch {
+      /* ignore */
+    }
+  }
+
   return (
-    <div className="site">
+    <div className={`site${showAnnounce ? ' site--announce' : ''}`}>
       <a className="skip-link" href="#contenu">
         Aller au contenu
       </a>
 
-      {cms.settings.announcement ? (
+      {showAnnounce ? (
         <div className="cms-announce" role="status">
           <span className={`cms-dot${cms.live ? ' is-live' : ''}`} aria-hidden="true" />
-          <strong>{cms.live ? 'CMS live' : 'Site'}</strong>
+          <strong>{cms.live ? 'Live' : 'Info'}</strong>
           <em>{cms.settings.announcement}</em>
-          <a href="/cms/admin/" target="_blank" rel="noreferrer">
-            Éditer
+          <a href="/cms/admin/" target="_blank" rel="noreferrer" className="cms-announce__edit">
+            CMS
           </a>
+          <button
+            type="button"
+            className="cms-announce__close"
+            aria-label="Masquer l’annonce"
+            onClick={dismissAnnounce}
+          >
+            ×
+          </button>
         </div>
       ) : null}
 
@@ -94,6 +126,9 @@ export function Layout() {
           <li className="nav__item--desktop">
             <NavLink to="/apres-vente">Après-vente</NavLink>
           </li>
+          <li className="nav__item--desktop">
+            <NavLink to="/messagerie?phone=99757218">Messagerie</NavLink>
+          </li>
           <li>
             <NavLink to="/devis" className="nav__cta">
               Devis
@@ -102,7 +137,11 @@ export function Layout() {
         </ul>
       </header>
 
-      <main id="contenu">
+      <main
+        id="contenu"
+        className={`page-main${pageIn ? ' is-in' : ''}`}
+        key={location.pathname}
+      >
         <Outlet />
       </main>
 
@@ -114,8 +153,8 @@ export function Layout() {
           href={quickWhatsAppUrl()}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label={`WhatsApp ${CONTACT.whatsappDisplay}`}
-          title={`WhatsApp ${CONTACT.whatsappDisplay}`}
+          aria-label={`WhatsApp ${waDisplay}`}
+          title={`WhatsApp ${waDisplay}`}
         >
           <svg viewBox="0 0 32 32" aria-hidden="true" width="22" height="22">
             <path
@@ -136,9 +175,9 @@ export function Layout() {
               entretien atelier.
             </p>
             <div className="footer-badges">
-              <span>WhatsApp {CONTACT.whatsappLabel}</span>
+              <span>WhatsApp {waDisplay}</span>
               <span>Visite & Meet</span>
-              <span>Entretien atelier</span>
+              <span>CMS {cms.live ? 'live' : 'local'}</span>
             </div>
           </div>
           <div>
@@ -157,25 +196,19 @@ export function Layout() {
                 <NavLink to="/visite">Visite showroom</NavLink>
               </li>
               <li>
-                <NavLink to="/reserver">Entretien</NavLink>
-              </li>
-              <li>
                 <NavLink to="/apres-vente">Après-vente</NavLink>
               </li>
               <li>
                 <NavLink to="/showrooms">Showrooms</NavLink>
               </li>
               <li>
-                <NavLink to="/avis">Avis</NavLink>
-              </li>
-              <li>
-                <NavLink to="/confidentialite">Confidentialité</NavLink>
+                <NavLink to="/messagerie?phone=99757218">Messagerie démo</NavLink>
               </li>
               <li>
                 <NavLink to="/admin">Espace admin</NavLink>
               </li>
               <li>
-                <NavLink to="/messagerie">Messagerie démo</NavLink>
+                <NavLink to="/confidentialite">Confidentialité</NavLink>
               </li>
             </ul>
           </div>
@@ -183,24 +216,23 @@ export function Layout() {
             <h3>Contact</h3>
             <ul>
               <li>
-                <a
-                  href={quickWhatsAppUrl()}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  WhatsApp · {CONTACT.whatsappLabel}
+                <a href={quickWhatsAppUrl()} target="_blank" rel="noopener noreferrer">
+                  WhatsApp · {waDisplay}
                 </a>
               </li>
               <li>
-                <a href={`tel:+${CONTACT.whatsappE164}`}>
-                  Appeler · {CONTACT.whatsappLabel}
-                </a>
+                <a href={`tel:+${CONTACT.whatsappE164}`}>Appeler · {CONTACT.whatsappLabel}</a>
               </li>
               <li>
                 <a href="tel:+21650512877">Etraton · 50 512 877</a>
               </li>
               <li>
                 <a href="tel:+21679731328">CLH Motors · 79 731 328</a>
+              </li>
+              <li>
+                <a href="/cms/admin/" target="_blank" rel="noreferrer">
+                  CMS Directus
+                </a>
               </li>
             </ul>
           </div>
