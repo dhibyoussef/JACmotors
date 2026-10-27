@@ -1,18 +1,27 @@
 import { Link } from 'react-router-dom'
+import { useCms } from '../cms/CmsProvider'
 import { CompareTable } from '../components/CompareTable'
 import { InterestLeadForm } from '../components/InterestLeadForm'
 import { Photo360 } from '../components/Photo360'
-import { models } from '../data/content'
+import { models as staticModels } from '../data/content'
 import { MODEL_360_FRAMES } from '../lib/contact'
+import { modelWithCms, priceLabelFor } from '../lib/cms'
 import { QUOTE_PACKAGES, stockBadgeClass, type QuoteModel } from '../lib/quotes'
 
 export function ModelsPage() {
+  const cms = useCms()
+  const models = staticModels.map((m) => modelWithCms(m, cms.vehicles))
+  const proPrice = priceLabelFor('T8 PRO', cms.priceByModel)
+  const proDigits = proPrice.replace(/[^\d\s]/g, '').trim() || '105 000'
+
   return (
     <>
       <header className="page-hero models-hero">
         <div className="page-hero__grid">
           <div>
-            <p className="section__eyebrow page-hero__eyebrow">La gamme pickup</p>
+            <p className="section__eyebrow page-hero__eyebrow">
+              La gamme pickup{cms.live ? ' · CMS' : ''}
+            </p>
             <h1>Conçus pour aller plus loin.</h1>
             <p className="page-hero__lead">
               Deux caractères. Une même exigence JAC : capacité, confort et présence sur
@@ -33,7 +42,7 @@ export function ModelsPage() {
           <div className="page-hero__aside">
             <span>Prix indicatif Tunisie</span>
             <strong>
-              105 000 <small>DT</small>
+              {proDigits} <small>DT</small>
             </strong>
             <p>T8 PRO Double Cabine · 2.0 L CTI Diesel · 4×4</p>
           </div>
@@ -54,6 +63,7 @@ export function ModelsPage() {
         {models.map((m) => {
           const frames = MODEL_360_FRAMES[m.id as 't8' | 't8pro'] ?? []
           const quote = QUOTE_PACKAGES[m.name as QuoteModel]
+          const price = priceLabelFor(m.name as QuoteModel, cms.priceByModel)
           return (
             <section className="model-panel" key={m.id} id={m.id}>
               <div
@@ -67,7 +77,7 @@ export function ModelsPage() {
                   <div className="model-panel__hero-meta">
                     <span>{m.drive}</span>
                     <span>Double cabine</span>
-                    {quote && <span className="meta-price">{quote.priceLabel}</span>}
+                    {quote && <span className="meta-price">{price}</span>}
                     {quote && (
                       <span className={stockBadgeClass(quote.stock)}>{quote.stockLabel}</span>
                     )}

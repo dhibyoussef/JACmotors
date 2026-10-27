@@ -24,7 +24,7 @@ import {
   type DashboardStats,
 } from '../lib/adminApi'
 import { isValidTunisianPhone, sanitizeText } from '../lib/security'
-import { showrooms } from '../data/content'
+import { useCms } from '../cms/CmsProvider'
 import {
   classifyMessage,
   extractTitle,
@@ -100,6 +100,8 @@ function roleLabel(role: string) {
 }
 
 export function AdminPage() {
+  const cms = useCms()
+  const showrooms = cms.showrooms
   const [booting, setBooting] = useState(true)
   const [user, setUser] = useState<AdminUser | null>(null)
   const [tab, setTab] = useState<Tab>('dashboard')

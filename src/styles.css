@@ -5353,3 +5353,75 @@ p {
     max-height: 240px;
   }
 }
+
+/* ─── CMS live announce bar ─── */
+.cms-announce {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 61;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.42rem clamp(1rem, 3vw, 2rem);
+  background: #111418;
+  color: #fff;
+  border-bottom: 1px solid rgba(227, 6, 19, 0.35);
+  font-size: 0.78rem;
+}
+
+.cms-announce strong {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff8a90;
+  font-size: 0.68rem;
+}
+
+.cms-announce em {
+  color: rgba(255, 255, 255, 0.78);
+  font-style: normal;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cms-announce a {
+  color: #fff;
+  background: rgba(227, 6, 19, 0.2);
+  border: 1px solid rgba(227, 6, 19, 0.45);
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.cms-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5c6570;
+  flex: none;
+}
+
+.cms-dot.is-live {
+  background: #00a884;
+  box-shadow: 0 0 0 4px rgba(0, 168, 132, 0.22);
+}
+
+.site:has(.cms-announce) {
+  --announce-h: 36px;
+}
+
+.site:has(.cms-announce) .nav {
+  top: var(--announce-h);
+}
+
+.site:has(.cms-announce) .model-switcher {
+  top: calc(var(--nav-h) + var(--announce-h));
+}
+
+.site:has(.cms-announce) .home-hero,
+.site:has(.cms-announce) .page-hero {
+  padding-top: calc(var(--nav-h) + var(--announce-h) + 2rem);
+}

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { showrooms } from '../data/content'
+import { useCms } from '../cms/CmsProvider'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 
 const MAP_QUERY = 'JAC Motors Tunisie Tunis'
@@ -7,12 +7,16 @@ const MAP_EMBED = `https://www.google.com/maps?q=${encodeURIComponent(MAP_QUERY)
 const MAP_OPEN = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAP_QUERY)}`
 
 export function ShowroomsPage() {
+  const cms = useCms()
+  const showrooms = cms.showrooms
   return (
     <>
       <header className="page-hero showroom-hero">
         <div className="page-hero__grid">
           <div>
-            <p className="section__eyebrow page-hero__eyebrow">Le réseau JAC en Tunisie</p>
+            <p className="section__eyebrow page-hero__eyebrow">
+              Le réseau JAC en Tunisie{cms.live ? ' · CMS live' : ''}
+            </p>
             <h1>Votre prochaine route commence ici.</h1>
             <p className="page-hero__lead">
               Un réseau de proximité pour découvrir la gamme, obtenir un conseil précis

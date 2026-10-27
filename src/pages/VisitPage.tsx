@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { showrooms } from '../data/content'
+import { useCms } from '../cms/CmsProvider'
 import { submitVisiteLead } from '../lib/api'
 import { messageriePath } from '../lib/messagerie'
 import {
@@ -50,6 +50,8 @@ type TicketState = VisitRequest & {
 
 export function VisitPage() {
   const navigate = useNavigate()
+  const cms = useCms()
+  const showrooms = cms.showrooms
   const [searchParams] = useSearchParams()
   const [form, setForm] = useState<VisitForm>(() => {
     const modeParam = parseMode(searchParams.get('mode'))

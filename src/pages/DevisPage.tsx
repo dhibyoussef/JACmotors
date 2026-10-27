@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { models, showrooms } from '../data/content'
+import { useCms } from '../cms/CmsProvider'
+import { models } from '../data/content'
 import { delayLabel, submitDevisLead } from '../lib/api'
 import { CONTACT, buildDevisRequestText, type DevisInput } from '../lib/contact'
 import { messageriePath } from '../lib/messagerie'
+import { priceLabelFor } from '../lib/cms'
 import {
   QUOTE_PACKAGES,
   colorById,
@@ -42,6 +44,8 @@ const initial: DevisForm = {
 
 export function DevisPage() {
   const navigate = useNavigate()
+  const cms = useCms()
+  const showrooms = cms.showrooms
   const [form, setForm] = useState<DevisForm>(initial)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -203,7 +207,7 @@ export function DevisPage() {
               </div>
               <div>
                 <dt>Prix indicatif</dt>
-                <dd>{QUOTE_PACKAGES[sent.payload.modele].priceLabel}</dd>
+                <dd>{priceLabelFor(sent.payload.modele, cms.priceByModel)}</dd>
               </div>
               <div>
                 <dt>Couleur</dt>
@@ -403,7 +407,7 @@ export function DevisPage() {
               <h3>JAC {form.modele}</h3>
               <div className="quote-card__price">
                 <span>Prix catalogue</span>
-                <strong>{quote.priceLabel}</strong>
+                <strong>{priceLabelFor(form.modele, cms.priceByModel)}</strong>
               </div>
               <p className="quote-card__version">{quote.version}</p>
 

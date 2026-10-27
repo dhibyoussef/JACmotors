@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import helmet from 'helmet'
+import rateLimit from 'express-rate-limit'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { existsSync } from 'node:fs'
@@ -56,8 +58,51 @@ const DEALER_E164 = (process.env.WHATSAPP_DEALER_E164 || '21699757218').replace(
 const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL || `http://127.0.0.1:${PORT}`
 
 const app = express()
-app.use(cors({ origin: true }))
+app.disable('x-powered-by')
+app.set('trust proxy', 1)
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginEmbedderPolicy: false,
+  }),
+)
+app.use(
+  cors({
+    origin: true,
+    methods: ['GET', 'POST', 'PATCH', 'OPTIONS'],
+  }),
+)
 app.use(express.json({ limit: '1mb' }))
+app.use(
+  '/api/',
+  rateLimit({
+    windowMs: 60_000,
+    max: 180,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { ok: false, error: 'Trop de requêtes — réessayez dans une minute.' },
+  }),
+)
+app.use(
+  '/api/leads/',
+  rateLimit({
+    windowMs: 60_000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { ok: false, error: 'Limite devis/visite atteinte — patientez un instant.' },
+  }),
+)
+app.use(
+  '/api/admin/login',
+  rateLimit({
+    windowMs: 15 * 60_000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { ok: false, error: 'Trop de tentatives de connexion.' },
+  }),
+)
 
 function bad(res, status, message) {
   return res.status(status).json({ ok: false, error: message })

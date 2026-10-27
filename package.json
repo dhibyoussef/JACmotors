@@ -12,6 +12,8 @@
     "start": "node server/index.mjs",
     "test:messages": "node scripts/smoke-test.mjs && node scripts/test-devis-messages.mjs",
     "test:api": "node scripts/test-automation.mjs",
+    "test:e2e:messagerie": "node scripts/e2e-devis-messagerie.mjs",
+    "audit": "node scripts/full-audit.mjs",
     "seed:demo": "node scripts/seed-demo.mjs"
   },
   "devDependencies": {
@@ -30,6 +32,8 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
+    "express-rate-limit": "^8.7.1",
+    "helmet": "^8.3.0",
     "pdfkit": "^0.20.2",
     "pg": "^8.23.1",
     "react": "^19.2.8",

@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
+import { useCms } from '../cms/CmsProvider'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 import { MobileDock } from './MobileDock'
 
@@ -7,6 +8,7 @@ export function Layout() {
   const [open, setOpen] = useState(false)
   const [solid, setSolid] = useState(false)
   const location = useLocation()
+  const cms = useCms()
   const isHome = location.pathname === '/'
   /** Hide FAB on pages that already have a primary WhatsApp send CTA */
   const hideFab =
@@ -47,6 +49,17 @@ export function Layout() {
       <a className="skip-link" href="#contenu">
         Aller au contenu
       </a>
+
+      {cms.settings.announcement ? (
+        <div className="cms-announce" role="status">
+          <span className={`cms-dot${cms.live ? ' is-live' : ''}`} aria-hidden="true" />
+          <strong>{cms.live ? 'CMS live' : 'Site'}</strong>
+          <em>{cms.settings.announcement}</em>
+          <a href="/cms/admin/" target="_blank" rel="noreferrer">
+            Éditer
+          </a>
+        </div>
+      ) : null}
 
       <header className={`nav ${solid || !isHome ? 'nav--solid' : 'nav--hero'}`}>
         <NavLink to="/" className="nav__brand" aria-label="JAC Motors Tunisie — Accueil">

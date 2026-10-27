@@ -1,13 +1,19 @@
 import { Link } from 'react-router-dom'
+import { useCms } from '../cms/CmsProvider'
 import { CompareTable } from '../components/CompareTable'
 import { FaqSection } from '../components/FaqSection'
 import { TrustStrip } from '../components/TrustStrip'
 import { models, reviews } from '../data/content'
+import { modelWithCms, priceLabelFor } from '../lib/cms'
 import { QUOTE_PACKAGES, stockBadgeClass, type QuoteModel } from '../lib/quotes'
 
 const highlightReviews = reviews.filter((r) => r.rating >= 4).slice(0, 3)
 
 export function HomePage() {
+  const cms = useCms()
+  const liveModels = models.map((m) => modelWithCms(m, cms.vehicles))
+  const proPrice = priceLabelFor('T8 PRO', cms.priceByModel)
+
   return (
     <>
       <section className="home-hero">
@@ -20,10 +26,10 @@ export function HomePage() {
           <p className="home-hero__brand">
             T8 <em>PRO</em>
           </p>
-          <h1>Le pickup qui prend la route au sérieux.</h1>
+          <h1>{cms.settings.hero_title}</h1>
           <p className="home-hero__lead">
-            4×4 diesel, double cabine et confort premium. Découvrez le JAC T8 PRO,
-            disponible en Tunisie à partir de <strong>105 000 DT</strong>.
+            {cms.settings.hero_lead}{' '}
+            Prix indicatif <strong>{proPrice}</strong>.
           </p>
           <div className="home-hero__actions">
             <Link className="btn btn--primary" to="/modeles#t8pro">
@@ -42,7 +48,7 @@ export function HomePage() {
           <div className="hero-trust">
             <span>2.0 CTI Diesel</span>
             <span>4×4</span>
-            <span>105 000 DT · prix indicatif</span>
+            <span>{proPrice} · prix indicatif</span>
             <span>Essai sur RDV</span>
           </div>
         </div>
@@ -56,7 +62,7 @@ export function HomePage() {
       <section className="home-strip" aria-label="Points clés">
         <article>
           <span className="home-strip__label">L’offre signature</span>
-          <strong>105 000 DT</strong>
+          <strong>{proPrice.replace(/^à partir de\s+/i, '')}</strong>
           <p>Prix indicatif du T8 PRO Double Cabine 2.0 L CTI Diesel 4×4.</p>
         </article>
         <article>
@@ -66,7 +72,7 @@ export function HomePage() {
         </article>
         <article>
           <span className="home-strip__label">Le réseau local</span>
-          <strong>4 points</strong>
+          <strong>{cms.showrooms.length || 4} points</strong>
           <p>Showrooms et atelier à Tunis, Ben Arous et El Mghira.</p>
         </article>
       </section>
@@ -120,8 +126,9 @@ export function HomePage() {
           </p>
         </div>
         <div className="model-feature-grid">
-          {models.map((model) => {
+          {liveModels.map((model) => {
             const quote = QUOTE_PACKAGES[model.name as QuoteModel]
+            const price = priceLabelFor(model.name as QuoteModel, cms.priceByModel)
             return (
               <article className="model-feature" key={model.id}>
                 <div
@@ -136,7 +143,7 @@ export function HomePage() {
                       {quote.stockLabel}
                     </em>
                   )}
-                  {quote && <em className="model-feature__price">{quote.priceLabel}</em>}
+                  {quote && <em className="model-feature__price">{price}</em>}
                 </div>
                 <div className="model-feature__body">
                   <p className="section__eyebrow">

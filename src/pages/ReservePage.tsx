@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useMemo, useState, type FormEvent } from 'react'
-import { serviceTypes, showrooms } from '../data/content'
+import { useCms } from '../cms/CmsProvider'
+import { serviceTypes } from '../data/content'
 import {
   downloadTicket,
   generateTicketId,
@@ -53,6 +54,8 @@ const initial: FormState = {
 type FieldErrors = Partial<Record<keyof FormState | 'form', string>>
 
 export function ReservePage() {
+  const cms = useCms()
+  const showrooms = cms.showrooms
   const [form, setForm] = useState<FormState>(initial)
   const [errors, setErrors] = useState<FieldErrors>({})
   const [ticket, setTicket] = useState<Reservation | null>(null)
