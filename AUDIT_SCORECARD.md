@@ -115,7 +115,7 @@ Base: http://127.0.0.1
 ### Ops / Availability / Tunnel — 100%
 
 - ✅ Nginx serving site (1 pt)
-- ✅ Public base URL configured (2 pt) — _https://begin-platform-springfield-true.trycloudflare.com_
+- ✅ Public base URL configured (2 pt) — _https://fossil-triumph-harris-silence.trycloudflare.com_
 - ✅ API uptime > 0 (1 pt)
 - ✅ Docker stack services assumed up (directus/n8n/pg) (1 pt) — _Verified earlier in session_
 

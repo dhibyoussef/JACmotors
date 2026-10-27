@@ -1,6 +1,6 @@
 # JAC Motors Tunisie — Full path index (every case + outcome)
 
-**Public base:** https://charm-choir-butter-centuries.trycloudflare.com  
+**Public base:** https://fossil-triumph-harris-silence.trycloudflare.com  
 **Evidence run saved under:** `/opt/cursor/artifacts/demo-paths/`  
 **Screenshots:** `/opt/cursor/artifacts/screenshots/0{1-6}-*.png`  
 **WhatsApp mode now:** dry-run (messages + PDFs prepared & logged; live send when Cloud API tokens are set)
