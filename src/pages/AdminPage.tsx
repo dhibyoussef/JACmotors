@@ -25,6 +25,13 @@ import {
 } from '../lib/adminApi'
 import { isValidTunisianPhone, sanitizeText } from '../lib/security'
 import { showrooms } from '../data/content'
+import {
+  classifyMessage,
+  extractTitle,
+  formatChatText,
+  kindLabel,
+  type ChatKind,
+} from '../lib/messageFormat'
 
 type Tab =
   | 'dashboard'
@@ -146,6 +153,7 @@ export function AdminPage() {
   const [conversations, setConversations] = useState<MsgConversation[]>([])
   const [threadPhone, setThreadPhone] = useState('21699757218')
   const [threadMessages, setThreadMessages] = useState<MsgItem[]>([])
+  const [msgFilter, setMsgFilter] = useState<'all' | ChatKind>('all')
 
   const refresh = useCallback(async () => {
     setError('')
@@ -455,11 +463,17 @@ export function AdminPage() {
       <main className="admin-main">
         <header className="admin-main__head">
           <div>
-            <p className="section__eyebrow">JAC Motors Tunisie</p>
+            <p className="section__eyebrow">JAC Motors Tunisie · back-office</p>
             <h1>{TABS.find((t) => t.id === tab)?.label}</h1>
+            {tab === 'messenger' ? (
+              <p className="admin-main__lead">
+                Inbox serveur (alternative WhatsApp démo). Mise en forme lisible,
+                alertes concession séparées des messages client et PDF.
+              </p>
+            ) : null}
           </div>
           <div className="admin-main__actions">
-            {user.role === 'admin' ? (
+            {user.role === 'admin' && tab === 'dashboard' ? (
               <button type="button" className="btn btn--primary" onClick={() => onSeedDemo()}>
                 Remplir démo
               </button>
@@ -852,66 +866,141 @@ export function AdminPage() {
 
         {tab === 'messenger' && (
           <section className="admin-panel">
-            <p className="admin-help">
-              Messagerie installée sur le serveur (alternative WhatsApp pour la démo).
-              Chaque devis / visite / Meet / check-up envoie un message ici
-              automatiquement — ouvrez aussi{' '}
-              <Link to="/messagerie?phone=99757218">/messagerie</Link> comme téléphone
-              client.
-            </p>
-            <div className="admin-grid-2">
-              <div className="admin-card">
-                <h2>Conversations ({conversations.length})</h2>
-                <ul className="admin-list">
-                  {conversations.map((c) => (
-                    <li key={c.phone}>
-                      <button
-                        type="button"
-                        className="admin-conv-btn"
-                        onClick={async () => {
-                          setThreadPhone(c.phone)
-                          const token = getAdminToken()
-                          const res = await fetch(
-                            `/api/messenger/messages?phone=${encodeURIComponent(c.phone)}`,
-                            {
-                              headers: token
-                                ? { Authorization: `Bearer ${token}` }
-                                : {},
-                            },
-                          )
-                          const data = await res.json()
-                          if (data?.ok) {
-                            setThreadMessages((data.messages || []).slice().reverse())
-                          }
-                        }}
-                      >
-                        <strong>+{c.phone}</strong>
-                        <span>
-                          {c.count} msg · {c.lastPreview}
-                        </span>
-                      </button>
-                    </li>
-                  ))}
+            <div className="inbox-toolbar">
+              <p className="admin-help" style={{ margin: 0 }}>
+                Vue client :{' '}
+                <Link to="/messagerie?phone=99757218">ouvrir le téléphone</Link>
+              </p>
+              <div className="inbox-filters">
+                {(
+                  [
+                    ['all', 'Tous'],
+                    ['client', 'Client'],
+                    ['dealer', 'Concession'],
+                    ['document', 'PDF'],
+                  ] as const
+                ).map(([id, label]) => (
+                  <button
+                    key={id}
+                    type="button"
+                    className={`inbox-chip${msgFilter === id ? ' is-on' : ''}`}
+                    onClick={() => setMsgFilter(id)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="inbox-layout">
+              <aside className="inbox-convs">
+                <h2>Conversations · {conversations.length}</h2>
+                <ul>
+                  {conversations.map((c) => {
+                    const active = c.phone === threadPhone || c.phone.endsWith(threadPhone.slice(-8))
+                    const digits = c.phone.replace(/\D/g, '')
+                    const pretty =
+                      digits.length >= 8
+                        ? `+216 ${digits.slice(-8, -6)} ${digits.slice(-6, -3)} ${digits.slice(-3)}`
+                        : `+${digits}`
+                    return (
+                      <li key={c.phone}>
+                        <button
+                          type="button"
+                          className={`inbox-conv${active ? ' is-on' : ''}`}
+                          onClick={async () => {
+                            setThreadPhone(c.phone)
+                            const token = getAdminToken()
+                            const res = await fetch(
+                              `/api/messenger/messages?phone=${encodeURIComponent(c.phone)}`,
+                              {
+                                headers: token
+                                  ? { Authorization: `Bearer ${token}` }
+                                  : {},
+                              },
+                            )
+                            const data = await res.json()
+                            if (data?.ok) {
+                              setThreadMessages((data.messages || []).slice().reverse())
+                            }
+                          }}
+                        >
+                          <span className="inbox-conv__avatar">
+                            {digits.slice(-2)}
+                          </span>
+                          <span className="inbox-conv__meta">
+                            <strong>{pretty}</strong>
+                            <em>
+                              {c.count} msg · {extractTitle(c.lastPreview)}
+                            </em>
+                          </span>
+                        </button>
+                      </li>
+                    )
+                  })}
                   {!conversations.length ? (
-                    <li>Aucun message — lancez un devis ou Remplir démo.</li>
+                    <li className="inbox-empty">Aucun message pour le moment.</li>
                   ) : null}
                 </ul>
-              </div>
-              <div className="admin-card">
-                <h2>Thread +{threadPhone}</h2>
-                <div className="admin-thread">
-                  {threadMessages.map((m) => (
-                    <article key={m.id} className="admin-thread__msg">
-                      <pre>{m.body || m.caption || ''}</pre>
-                      {m.fileUrl ? (
-                        <a href={m.fileUrl} target="_blank" rel="noreferrer">
-                          📄 {m.fileName || 'PDF'}
-                        </a>
-                      ) : null}
-                      <time>{formatDate(m.at)}</time>
-                    </article>
-                  ))}
-                  {!threadMessages.length ? <p>Sélectionnez une conversation.</p> : null}
+              </aside>
+              <div className="inbox-thread-wrap">
+                <header className="inbox-thread__head">
+                  <div>
+                    <strong>
+                      {threadPhone.replace(/\D/g, '').length >= 8
+                        ? `+216 ${threadPhone.replace(/\D/g, '').slice(-8, -6)} ${threadPhone.replace(/\D/g, '').slice(-6, -3)} ${threadPhone.replace(/\D/g, '').slice(-3)}`
+                        : `+${threadPhone}`}
+                    </strong>
+                    <span>
+                      Fil · {msgFilter === 'all' ? 'tous les messages' : kindLabel(msgFilter)}
+                    </span>
+                  </div>
+                </header>
+                <div className="inbox-thread">
+                  {(() => {
+                    const visible = threadMessages.filter((m) => {
+                      if (msgFilter === 'all') return true
+                      return classifyMessage(m) === msgFilter
+                    })
+                    if (!threadMessages.length) {
+                      return (
+                        <p className="inbox-empty">
+                          Choisissez une conversation à gauche.
+                        </p>
+                      )
+                    }
+                    if (!visible.length) {
+                      return (
+                        <p className="inbox-empty">
+                          Aucun message pour ce filtre.
+                        </p>
+                      )
+                    }
+                    return visible.map((m) => {
+                      const kind = classifyMessage(m)
+                      return (
+                        <article
+                          key={m.id}
+                          className={`chat-card chat-card--${kind}`}
+                        >
+                          <div className="chat-card__badge">{kindLabel(kind)}</div>
+                          <div className="chat-card__body">
+                            {formatChatText(m.body || m.caption || '')}
+                          </div>
+                          {m.fileUrl ? (
+                            <a
+                              className="chat-card__pdf"
+                              href={m.fileUrl}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              📄 {m.fileName || 'Ouvrir le PDF'}
+                            </a>
+                          ) : null}
+                          <time>{formatDate(m.at)}</time>
+                        </article>
+                      )
+                    })
+                  })()}
                 </div>
               </div>
             </div>

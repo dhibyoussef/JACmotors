@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import {
+  classifyMessage,
+  formatChatText,
+  kindLabel,
+} from '../lib/messageFormat'
 
 type Msg = {
   id: string
@@ -20,7 +25,7 @@ function formatPhone(p: string) {
   if (d.startsWith('216') && d.length === 11) {
     return `+216 ${d.slice(3, 5)} ${d.slice(5, 8)} ${d.slice(8)}`
   }
-  return p
+  return p.startsWith('+') ? p : `+${p}`
 }
 
 function formatTime(iso: string) {
@@ -42,7 +47,10 @@ export function MessageriePage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
 
-  const titlePhone = useMemo(() => formatPhone(phone.startsWith('216') ? phone : `216${phone.replace(/\D/g, '').slice(-8)}`), [phone])
+  const titlePhone = useMemo(() => {
+    const d = phone.replace(/\D/g, '')
+    return formatPhone(d.startsWith('216') ? d : `216${d.slice(-8)}`)
+  }, [phone])
 
   async function load(p: string) {
     setLoading(true)
@@ -61,7 +69,12 @@ export function MessageriePage() {
         setError(data.error || 'Messagerie indisponible')
         setMessages([])
       } else {
-        setMessages(data.messages || [])
+        // Client phone view: only client + document messages (not dealer alerts)
+        const cleaned = (data.messages || []).filter((m) => {
+          const k = classifyMessage(m)
+          return k === 'client' || k === 'document'
+        })
+        setMessages(cleaned)
         if (data.phone) setPhone(data.phone)
       }
     } catch {
@@ -74,7 +87,7 @@ export function MessageriePage() {
   useEffect(() => {
     document.title = 'Messagerie JAC · démo'
     load(phone)
-    const t = setInterval(() => load(phone), 4000)
+    const t = setInterval(() => load(phone), 5000)
     return () => clearInterval(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phone])
@@ -90,21 +103,26 @@ export function MessageriePage() {
     <div className="msg-shell">
       <header className="msg-top">
         <div>
-          <p className="section__eyebrow">Démo serveur · sans Meta</p>
-          <h1>JAC Messagerie</h1>
+          <p className="section__eyebrow">Démo serveur · JAC Messagerie</p>
+          <h1>Votre boîte</h1>
           <p className="msg-top__lead">
-            Alternative WhatsApp pour la démo : les ACK, PDF et RDV arrivent ici
-            automatiquement.
+            Les confirmations et PDF arrivent ici automatiquement — comme WhatsApp,
+            sans Meta.
           </p>
         </div>
-        <Link className="btn btn--outline" to="/admin">
-          Admin
-        </Link>
+        <div className="msg-top__actions">
+          <Link className="btn btn--outline" to="/admin">
+            Admin
+          </Link>
+          <Link className="btn btn--primary" to="/devis">
+            Tester un devis
+          </Link>
+        </div>
       </header>
 
       <form className="msg-phone-bar" onSubmit={onOpen}>
         <label>
-          <span>Numéro (Tunisie)</span>
+          <span>Numéro</span>
           <input
             value={phoneInput}
             onChange={(e) => setPhoneInput(e.target.value)}
@@ -112,7 +130,7 @@ export function MessageriePage() {
           />
         </label>
         <button className="btn btn--primary" type="submit">
-          Ouvrir la boîte
+          Ouvrir
         </button>
         <button
           className="btn btn--outline"
@@ -129,39 +147,38 @@ export function MessageriePage() {
 
       <section className="msg-phone">
         <div className="msg-phone__status">
-          <strong>{titlePhone}</strong>
-          <span>Canal · JAC Messagerie</span>
+          <div>
+            <strong>{titlePhone}</strong>
+            <span>JAC Motors Tunisie · en ligne</span>
+          </div>
         </div>
         <div className="msg-phone__thread">
           {loading && !messages.length ? <p className="msg-empty">Chargement…</p> : null}
           {error ? <p className="msg-empty">{error}</p> : null}
           {!loading && !error && !messages.length ? (
             <p className="msg-empty">
-              Aucun message encore. Envoyez un devis / visite / check-up — le message
-              apparaît ici.
+              Aucun message client. Envoyez un devis pour voir l’accusé + le PDF.
             </p>
           ) : null}
-          {messages.map((m) => (
-            <article
-              key={m.id}
-              className={`msg-bubble ${m.type === 'document' ? 'is-doc' : ''}`}
-            >
-              <pre>{m.body || m.caption || ''}</pre>
-              {m.type === 'document' && m.fileUrl ? (
-                <a className="msg-doc" href={m.fileUrl} target="_blank" rel="noreferrer">
-                  📄 {m.fileName || 'Ouvrir le PDF'}
-                </a>
-              ) : null}
-              <time>{formatTime(m.at)}</time>
-            </article>
-          ))}
+          {messages.map((m) => {
+            const kind = classifyMessage(m)
+            return (
+              <article key={m.id} className={`msg-bubble msg-bubble--${kind}`}>
+                <div className="msg-bubble__kind">{kindLabel(kind)}</div>
+                <div className="msg-bubble__text">
+                  {formatChatText(m.body || m.caption || '')}
+                </div>
+                {m.type === 'document' && m.fileUrl ? (
+                  <a className="msg-doc" href={m.fileUrl} target="_blank" rel="noreferrer">
+                    Ouvrir le PDF · {m.fileName || 'document'}
+                  </a>
+                ) : null}
+                <time>{formatTime(m.at)}</time>
+              </article>
+            )
+          })}
         </div>
       </section>
-
-      <p className="msg-hint">
-        Plus tard, les mêmes messages pourront partir sur WhatsApp Cloud API — la
-        messagerie serveur reste le journal de démo.
-      </p>
     </div>
   )
 }
