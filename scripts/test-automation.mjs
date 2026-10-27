@@ -51,11 +51,11 @@ async function waitReady() {
 try {
   await waitReady()
 
-  await test('health reports dry-run whatsapp', async () => {
+  await test('health reports messagerie/whatsapp channel', async () => {
     const res = await fetch(`${BASE}/api/health`)
     const data = await res.json()
     assert.equal(data.ok, true)
-    assert.equal(data.whatsapp.mode, 'dry-run')
+    assert.ok(['messagerie', 'dry-run', 'cloud-api'].includes(data.whatsapp.mode))
   })
 
   await test('devis ack + pdf schedule (no second manual reply)', async () => {

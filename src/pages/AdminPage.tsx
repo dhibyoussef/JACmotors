@@ -32,11 +32,13 @@ type Tab =
   | 'clients'
   | 'calendar'
   | 'documents'
+  | 'messenger'
   | 'users'
   | 'jobs'
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard', label: 'Tableau de bord' },
+  { id: 'messenger', label: 'Messagerie' },
   { id: 'leads', label: 'Leads' },
   { id: 'clients', label: 'Clients' },
   { id: 'calendar', label: 'Calendrier RDV' },
@@ -44,6 +46,24 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'users', label: 'Utilisateurs' },
   { id: 'jobs', label: 'File WhatsApp' },
 ]
+
+type MsgConversation = {
+  phone: string
+  lastAt: string
+  lastPreview: string
+  count: number
+  hasDocument?: boolean
+}
+
+type MsgItem = {
+  id: string
+  type: string
+  body?: string
+  caption?: string | null
+  fileName?: string | null
+  fileUrl?: string | null
+  at: string
+}
 
 function formatDate(value?: string | null) {
   if (!value) return '—'
@@ -123,10 +143,15 @@ export function AdminPage() {
     time: '10:00',
     notes: '',
   })
+  const [conversations, setConversations] = useState<MsgConversation[]>([])
+  const [threadPhone, setThreadPhone] = useState('21699757218')
+  const [threadMessages, setThreadMessages] = useState<MsgItem[]>([])
 
   const refresh = useCallback(async () => {
     setError('')
-    const [d, l, c, a, docs, u, j] = await Promise.all([
+    const token = getAdminToken()
+    const headers: HeadersInit = token ? { Authorization: `Bearer ${token}` } : {}
+    const [d, l, c, a, docs, u, j, convRes, thrRes] = await Promise.all([
       fetchDashboard(),
       fetchLeads(),
       fetchClients(),
@@ -134,6 +159,12 @@ export function AdminPage() {
       fetchDocuments(),
       fetchUsers(),
       fetchJobs(),
+      fetch('/api/messenger/conversations', { headers }).then((r) => r.json()).catch(() => null),
+      fetch(`/api/messenger/messages?phone=${encodeURIComponent(threadPhone)}`, {
+        headers,
+      })
+        .then((r) => r.json())
+        .catch(() => null),
     ])
     if (d.ok) setStats(d.data.stats)
     if (l.ok) setLeads(l.data.leads)
@@ -142,8 +173,10 @@ export function AdminPage() {
     if (docs.ok) setDocuments(docs.data.documents)
     if (u.ok) setUsers(u.data.users)
     if (j.ok) setJobs(j.data.jobs)
+    if (convRes?.ok) setConversations(convRes.conversations || [])
+    if (thrRes?.ok) setThreadMessages((thrRes.messages || []).slice().reverse())
     if (!d.ok && !l.ok) setError(d.error || l.error)
-  }, [])
+  }, [threadPhone])
 
   useEffect(() => {
     document.title = 'Admin · JAC Motors Tunisie'
@@ -405,6 +438,7 @@ export function AdminPage() {
           ))}
         </nav>
         <div className="admin-side__foot">
+          <Link to="/messagerie?phone=99757218">Messagerie client</Link>
           <a href="/cms/admin/" target="_blank" rel="noreferrer">
             CMS Directus
           </a>
@@ -812,6 +846,74 @@ export function AdminPage() {
                   Enregistrer le rendez-vous
                 </button>
               </form>
+            </div>
+          </section>
+        )}
+
+        {tab === 'messenger' && (
+          <section className="admin-panel">
+            <p className="admin-help">
+              Messagerie installée sur le serveur (alternative WhatsApp pour la démo).
+              Chaque devis / visite / Meet / check-up envoie un message ici
+              automatiquement — ouvrez aussi{' '}
+              <Link to="/messagerie?phone=99757218">/messagerie</Link> comme téléphone
+              client.
+            </p>
+            <div className="admin-grid-2">
+              <div className="admin-card">
+                <h2>Conversations ({conversations.length})</h2>
+                <ul className="admin-list">
+                  {conversations.map((c) => (
+                    <li key={c.phone}>
+                      <button
+                        type="button"
+                        className="admin-conv-btn"
+                        onClick={async () => {
+                          setThreadPhone(c.phone)
+                          const token = getAdminToken()
+                          const res = await fetch(
+                            `/api/messenger/messages?phone=${encodeURIComponent(c.phone)}`,
+                            {
+                              headers: token
+                                ? { Authorization: `Bearer ${token}` }
+                                : {},
+                            },
+                          )
+                          const data = await res.json()
+                          if (data?.ok) {
+                            setThreadMessages((data.messages || []).slice().reverse())
+                          }
+                        }}
+                      >
+                        <strong>+{c.phone}</strong>
+                        <span>
+                          {c.count} msg · {c.lastPreview}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                  {!conversations.length ? (
+                    <li>Aucun message — lancez un devis ou Remplir démo.</li>
+                  ) : null}
+                </ul>
+              </div>
+              <div className="admin-card">
+                <h2>Thread +{threadPhone}</h2>
+                <div className="admin-thread">
+                  {threadMessages.map((m) => (
+                    <article key={m.id} className="admin-thread__msg">
+                      <pre>{m.body || m.caption || ''}</pre>
+                      {m.fileUrl ? (
+                        <a href={m.fileUrl} target="_blank" rel="noreferrer">
+                          📄 {m.fileName || 'PDF'}
+                        </a>
+                      ) : null}
+                      <time>{formatDate(m.at)}</time>
+                    </article>
+                  ))}
+                  {!threadMessages.length ? <p>Sélectionnez une conversation.</p> : null}
+                </div>
+              </div>
             </div>
           </section>
         )}

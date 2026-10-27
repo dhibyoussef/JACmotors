@@ -161,6 +161,9 @@ export function Layout() {
               <li>
                 <NavLink to="/admin">Espace admin</NavLink>
               </li>
+              <li>
+                <NavLink to="/messagerie">Messagerie démo</NavLink>
+              </li>
             </ul>
           </div>
           <div>

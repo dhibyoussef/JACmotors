@@ -40,6 +40,12 @@ import {
 } from './lib/db.mjs'
 import { n8nStatus } from './lib/n8n.mjs'
 import { sendDocumentMessage, sendTextMessage, whatsappStatus } from './lib/whatsapp.mjs'
+import {
+  importOutboxOnce,
+  listConversations,
+  listMessages,
+  recordMessage,
+} from './lib/messenger.mjs'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
@@ -242,6 +248,52 @@ app.get('/api/admin/documents', requireAdmin, async (_req, res) => {
 
 app.get('/api/admin/jobs', requireAdmin, async (_req, res) => {
   res.json({ ok: true, jobs: await listJobs(100) })
+})
+
+/** On-server fake messagerie (demo inbox — no Meta required) */
+app.get('/api/messenger/conversations', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, conversations: await listConversations() })
+})
+
+app.get('/api/messenger/messages', requireAdmin, async (req, res) => {
+  const phone = req.query.phone ? String(req.query.phone) : null
+  res.json({ ok: true, messages: await listMessages({ phone, limit: 300 }) })
+})
+
+/** Public demo phone view — client opens /messagerie?phone=99757218 */
+app.get('/api/messenger/public', async (req, res) => {
+  const raw = String(req.query.phone || DEALER_E164)
+  const phone = toE164(raw) || String(raw).replace(/\D/g, '')
+  const messages = await listMessages({ phone, limit: 100 })
+  res.json({
+    ok: true,
+    phone,
+    channel: 'jac-messagerie',
+    messages: [...messages].reverse(),
+  })
+})
+
+app.post('/api/messenger/import-outbox', requireAdmin, async (_req, res) => {
+  res.json({ ok: true, ...(await importOutboxOnce()) })
+})
+
+app.post('/api/messenger/demo-ping', requireAdmin, async (req, res) => {
+  const phone = toE164(req.body?.telephone || DEALER_E164) || DEALER_E164
+  const msg = await recordMessage({
+    to: phone,
+    type: 'text',
+    body: [
+      '*JAC MESSAGERIE (démo)*',
+      '',
+      `Bonjour *${String(req.body?.nom || 'Youssef').split(/\s+/)[0]}*,`,
+      '',
+      'Ceci est un message de test sur la messagerie installée sur le serveur.',
+      'Pas besoin de WhatsApp / Meta pour la démo.',
+      '',
+      '*JAC Motors Tunisie*',
+    ].join('\n'),
+  })
+  res.json({ ok: true, message: msg })
 })
 
 /** Public checkup booking (client picks a date) */
@@ -539,11 +591,17 @@ try {
 } catch (err) {
   console.error('[db] init failed — file store only', err?.message || err)
 }
+try {
+  const imp = await importOutboxOnce()
+  console.log(`[messenger] ready (imported ${imp.imported}, total ${imp.total})`)
+} catch (err) {
+  console.error('[messenger] init failed', err?.message || err)
+}
 await restoreJobs()
 
 app.listen(PORT, () => {
   console.log(`JAC automation server on http://127.0.0.1:${PORT}`)
-  console.log(`WhatsApp mode: ${whatsappStatus().mode}`)
+  console.log(`Messaging: ${whatsappStatus().mode} → /messagerie`)
   console.log(`PDF delay: ${PDF_DELAY_MS}ms`)
   console.log(`n8n webhooks: ${n8nStatus().webhookBase}`)
   console.log(`Data dir: ${DATA_DIR}`)

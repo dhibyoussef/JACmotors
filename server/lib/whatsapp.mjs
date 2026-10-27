@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { writeOutbox } from './store.mjs'
+import { recordMessage } from './messenger.mjs'
 
 /**
  * WhatsApp Cloud API sender.
@@ -21,9 +22,13 @@ function config() {
 export function whatsappStatus() {
   const c = config()
   return {
-    mode: c.dryRun ? 'dry-run' : 'cloud-api',
+    mode: c.dryRun ? 'messagerie' : 'cloud-api',
+    channel: c.dryRun ? 'jac-messagerie' : 'whatsapp-cloud',
     phoneNumberIdSet: Boolean(c.phoneNumberId),
     tokenSet: Boolean(c.token),
+    note: c.dryRun
+      ? 'Messages go to on-server JAC Messagerie (/messagerie) until WhatsApp Cloud API tokens are set.'
+      : 'Live WhatsApp Cloud API + mirrored in JAC Messagerie.',
   }
 }
 
@@ -45,16 +50,32 @@ async function graph(pathname, init = {}) {
   return data
 }
 
+async function mirrorToMessagerie(payload) {
+  try {
+    await recordMessage(payload)
+  } catch (err) {
+    console.error('[messenger] record failed', err?.message || err)
+  }
+}
+
 export async function sendTextMessage(toE164, body) {
   const c = config()
   const stamp = Date.now()
+  const at = new Date().toISOString()
+  await mirrorToMessagerie({
+    type: 'text',
+    to: toE164,
+    body,
+    at,
+    channel: c.dryRun ? 'jac-messagerie' : 'whatsapp+messagerie',
+  })
   if (c.dryRun) {
     const file = await writeOutbox(
       `${stamp}-text-${toE164}.json`,
-      { type: 'text', to: toE164, body, at: new Date().toISOString() },
+      { type: 'text', to: toE164, body, at },
     )
-    console.log(`[whatsapp:dry-run] text → ${toE164} (${file})`)
-    return { dryRun: true, file }
+    console.log(`[messagerie] text → ${toE164} (${file})`)
+    return { dryRun: true, channel: 'jac-messagerie', file }
   }
 
   return graph(`${c.phoneNumberId}/messages`, {
@@ -87,6 +108,21 @@ async function uploadDocument(filePath, fileName) {
 export async function sendDocumentMessage(toE164, filePath, { fileName, caption }) {
   const c = config()
   const stamp = Date.now()
+  const at = new Date().toISOString()
+  const publicBase = process.env.PUBLIC_BASE_URL || ''
+  const fileUrl = fileName
+    ? `${publicBase}/api/pdfs/${encodeURIComponent(fileName)}`
+    : null
+  await mirrorToMessagerie({
+    type: 'document',
+    to: toE164,
+    body: caption || fileName || 'Document',
+    caption,
+    fileName,
+    fileUrl,
+    at,
+    channel: c.dryRun ? 'jac-messagerie' : 'whatsapp+messagerie',
+  })
   if (c.dryRun) {
     const file = await writeOutbox(
       `${stamp}-document-${toE164}.json`,
@@ -96,11 +132,11 @@ export async function sendDocumentMessage(toE164, filePath, { fileName, caption 
         filePath,
         fileName,
         caption,
-        at: new Date().toISOString(),
+        at,
       },
     )
-    console.log(`[whatsapp:dry-run] document → ${toE164} (${path.basename(filePath)})`)
-    return { dryRun: true, file }
+    console.log(`[messagerie] document → ${toE164} (${path.basename(filePath)})`)
+    return { dryRun: true, channel: 'jac-messagerie', file, fileUrl }
   }
 
   const uploaded = await uploadDocument(filePath, fileName)
