@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { submitInterestLead } from '../lib/api'
+import { messageriePath } from '../lib/messagerie'
 import { isValidTunisianPhone, sanitizeText } from '../lib/security'
 
 type Props = {
@@ -13,11 +15,14 @@ export function InterestLeadForm({
   source,
   title = 'Recevoir un Google Meet / rappel WhatsApp',
 }: Props) {
+  const navigate = useNavigate()
   const [nom, setNom] = useState('')
   const [telephone, setTelephone] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const [done, setDone] = useState<{ leadId: string; mode: string } | null>(null)
+  const [done, setDone] = useState<{ leadId: string; mode: string; phone: string } | null>(
+    null,
+  )
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault()
@@ -32,9 +37,10 @@ export function InterestLeadForm({
       return
     }
     setSubmitting(true)
+    const phone = telephone.trim()
     const result = await submitInterestLead({
       nom: cleanNom,
-      telephone: telephone.trim(),
+      telephone: phone,
       modele,
       source,
     })
@@ -43,17 +49,26 @@ export function InterestLeadForm({
       setError(result.error)
       return
     }
-    setDone({ leadId: result.data.leadId, mode: result.data.whatsapp.mode })
+    setDone({ leadId: result.data.leadId, mode: result.data.whatsapp.mode, phone })
+    window.setTimeout(() => {
+      navigate(messageriePath(phone, { from: '360', ref: result.data.leadId }))
+    }, 1000)
   }
 
   if (done) {
     return (
       <div className="interest-form interest-form--done">
         <p className="section__eyebrow">Demande envoyée</p>
-        <strong>Merci — confirmation WhatsApp en cours.</strong>
+        <strong>Merci — ouverture de votre messagerie…</strong>
         <p>
           Réf. {done.leadId}. Un conseiller JAC vous recontacte pour le Meet / la visite.
         </p>
+        <Link
+          className="btn btn--whatsapp"
+          to={messageriePath(done.phone, { from: '360', ref: done.leadId })}
+        >
+          Ouvrir la messagerie
+        </Link>
       </div>
     )
   }

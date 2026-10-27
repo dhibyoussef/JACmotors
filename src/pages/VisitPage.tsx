@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { showrooms } from '../data/content'
 import { submitVisiteLead } from '../lib/api'
+import { messageriePath } from '../lib/messagerie'
 import {
   CONTACT,
   formatVisitDate,
@@ -48,6 +49,7 @@ type TicketState = VisitRequest & {
 }
 
 export function VisitPage() {
+  const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [form, setForm] = useState<VisitForm>(() => {
     const modeParam = parseMode(searchParams.get('mode'))
@@ -156,13 +158,22 @@ export function VisitPage() {
         return
       }
 
+      const leadId = api.data.leadId || saved.id
       setTicket({
         ...saved,
-        id: api.data.leadId || saved.id,
+        id: leadId,
         meetUrl: api.data.meetUrl ?? saved.meetUrl,
         automationMode: api.data.whatsapp.mode,
       })
       setHistory(listVisitRequests())
+      window.setTimeout(() => {
+        navigate(
+          messageriePath(saved.telephone, {
+            from: saved.mode === 'meet' ? 'meet' : saved.mode === 'essai' ? 'essai' : 'visite',
+            ref: leadId,
+          }),
+        )
+      }, 1200)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible d’enregistrer la visite.')
     } finally {
@@ -270,6 +281,15 @@ export function VisitPage() {
             )}
 
             <div className="panel__actions panel__actions--row">
+              <Link
+                className="btn btn--whatsapp"
+                to={messageriePath(ticket.telephone, {
+                  from: ticket.mode === 'meet' ? 'meet' : ticket.mode === 'essai' ? 'essai' : 'visite',
+                  ref: ticket.id,
+                })}
+              >
+                Ouvrir la messagerie
+              </Link>
               <button
                 type="button"
                 className="btn btn--outline"

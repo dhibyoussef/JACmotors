@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { CONTACT, quickWhatsAppUrl } from '../lib/contact'
 import { bookPublicAppointment, fetchSlots, type Slot } from '../lib/adminApi'
+import { messageriePath } from '../lib/messagerie'
 import { isValidTunisianPhone, sanitizeMatricule, sanitizeText } from '../lib/security'
 
 const PILLARS = [
@@ -54,6 +55,7 @@ function labelDay(iso: string) {
 }
 
 export function AfterSalesPage() {
+  const navigate = useNavigate()
   const days = useMemo(() => nextOpenDays(12), [])
   const [date, setDate] = useState(days[0] || '')
   const [slots, setSlots] = useState<Slot[]>([])
@@ -62,6 +64,7 @@ export function AfterSalesPage() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [doneId, setDoneId] = useState('')
+  const [donePhone, setDonePhone] = useState('')
   const [form, setForm] = useState({
     nom: '',
     telephone: '',
@@ -127,8 +130,15 @@ export function AfterSalesPage() {
       setError(result.error)
       return
     }
+    const phone = form.telephone.trim()
     setDoneId(result.appointment.id)
+    setDonePhone(phone)
     setForm({ nom: '', telephone: '', matricule: '', modele: 'T8 PRO', notes: '' })
+    window.setTimeout(() => {
+      navigate(
+        messageriePath(phone, { from: 'checkup', ref: result.appointment.id }),
+      )
+    }, 1200)
   }
 
   return (
@@ -187,12 +197,21 @@ export function AfterSalesPage() {
         {doneId ? (
           <div className="checkup-success">
             <p className="section__eyebrow">Demande enregistrée</p>
-            <h3>Merci — votre RDV atelier est en attente de confirmation.</h3>
+            <h3>Merci — ouverture de votre messagerie…</h3>
             <p>
-              Référence <strong>{doneId}</strong>. Un message WhatsApp de confirmation
-              part au client (mode dry-run tant que l’API WhatsApp n’est pas branchée).
+              Référence <strong>{doneId}</strong>. La confirmation WhatsApp démo s’affiche
+              automatiquement dans votre conversation.
             </p>
             <div className="aftersales__actions">
+              <Link
+                className="btn btn--whatsapp"
+                to={messageriePath(donePhone || '99757218', {
+                  from: 'checkup',
+                  ref: doneId,
+                })}
+              >
+                Ouvrir la messagerie
+              </Link>
               <button
                 type="button"
                 className="btn btn--primary"

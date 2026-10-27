@@ -1,8 +1,9 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { models, showrooms } from '../data/content'
 import { delayLabel, submitDevisLead } from '../lib/api'
 import { CONTACT, buildDevisRequestText, type DevisInput } from '../lib/contact'
+import { messageriePath } from '../lib/messagerie'
 import {
   QUOTE_PACKAGES,
   colorById,
@@ -40,10 +41,23 @@ const initial: DevisForm = {
 }
 
 export function DevisPage() {
+  const navigate = useNavigate()
   const [form, setForm] = useState<DevisForm>(initial)
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState<SentState | null>(null)
+  const [openingChat, setOpeningChat] = useState(false)
+
+  useEffect(() => {
+    if (!sent) return
+    setOpeningChat(true)
+    const path = messageriePath(sent.payload.telephone, {
+      from: 'devis',
+      ref: sent.leadId,
+    })
+    const t = window.setTimeout(() => navigate(path), 1200)
+    return () => window.clearTimeout(t)
+  }, [sent, navigate])
 
   const showroomName = useMemo(
     () => showrooms.find((s) => s.id === form.showroomId)?.name ?? 'Showroom',
@@ -153,25 +167,27 @@ export function DevisPage() {
         {sent ? (
           <article className="panel panel--ticket panel--success-flow">
             <p className="section__eyebrow">Demande enregistrée</p>
-            <h2>Merci — votre devis est en route.</h2>
+            <h2>Merci — ouverture de votre messagerie…</h2>
             <p className="success-flow__lead">
-              Votre demande a bien été prise en compte. Un message de confirmation part sur
-              WhatsApp <strong>{sent.payload.telephone}</strong>. Le document PDF
-              professionnel (prix, specs, couleur, options, tampon JAC) suivra
-              automatiquement sous environ <strong>{delayLabel(sent.pdfDelayMs)}</strong>.
+              Confirmation envoyée sur <strong>{sent.payload.telephone}</strong>. Le PDF
+              tamponné suivra automatiquement sous environ{' '}
+              <strong>{delayLabel(sent.pdfDelayMs)}</strong>.
+              {openingChat
+                ? ' Nous ouvrons votre conversation WhatsApp démo maintenant.'
+                : null}
             </p>
 
             <ol className="success-flow__steps">
               <li>
-                <strong>Maintenant</strong>
-                <span>Confirmation WhatsApp au client</span>
+                <strong>1 · Maintenant</strong>
+                <span>Confirmation dans la messagerie</span>
               </li>
               <li>
-                <strong>Sous peu</strong>
-                <span>Envoi automatique du PDF tamponné</span>
+                <strong>2 · Sous peu</strong>
+                <span>PDF devis automatique</span>
               </li>
               <li>
-                <strong>Ensuite</strong>
+                <strong>3 · Ensuite</strong>
                 <span>Un conseiller peut préciser stock / essai</span>
               </li>
             </ol>
@@ -207,24 +223,33 @@ export function DevisPage() {
             </dl>
 
             <div className="panel__actions panel__actions--row">
-              <a className="btn btn--primary" href={sent.pdfUrl} target="_blank" rel="noreferrer">
+              <Link
+                className="btn btn--whatsapp"
+                to={messageriePath(sent.payload.telephone, {
+                  from: 'devis',
+                  ref: sent.leadId,
+                })}
+              >
+                Ouvrir la messagerie maintenant
+              </Link>
+              <a className="btn btn--outline" href={sent.pdfUrl} target="_blank" rel="noreferrer">
                 Télécharger le PDF
               </a>
-              <Link className="btn btn--outline" to="/visite?mode=essai">
-                Réserver un essai
-              </Link>
               <button
                 type="button"
                 className="btn btn--ghost-dark"
-                onClick={() => setSent(null)}
+                onClick={() => {
+                  setOpeningChat(false)
+                  setSent(null)
+                }}
               >
                 Nouvelle demande
               </button>
             </div>
             <p className="form-hint">
-              Mode WhatsApp : <strong>{sent.whatsappMode}</strong>
-              {sent.whatsappMode === 'dry-run'
-                ? ' — configurez WHATSAPP_TOKEN pour l’envoi réel (voir AUTOMATION.md).'
+              Canal : <strong>{sent.whatsappMode}</strong>
+              {sent.whatsappMode === 'messagerie' || sent.whatsappMode === 'dry-run'
+                ? ' — messagerie serveur (démo WhatsApp). Branchez WHATSAPP_TOKEN pour l’API réelle.'
                 : ' — messages et PDF partent via l’API WhatsApp Business.'}
             </p>
           </article>
