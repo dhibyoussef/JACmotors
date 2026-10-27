@@ -12,6 +12,7 @@ import { VisitPage } from './pages/VisitPage'
 import { AfterSalesPage } from './pages/AfterSalesPage'
 import { AdminPage } from './pages/AdminPage'
 import { MessageriePage } from './pages/MessageriePage'
+import { TestGuidePage } from './pages/TestGuidePage'
 
 export default function App() {
   return (
@@ -30,7 +31,8 @@ export default function App() {
             <Route path="showrooms" element={<ShowroomsPage />} />
             <Route path="avis" element={<ReviewsPage />} />
             <Route path="confidentialite" element={<PrivacyPage />} />
-            <Route path="demo" element={<Navigate to="/devis" replace />} />
+            <Route path="test" element={<TestGuidePage />} />
+            <Route path="demo" element={<Navigate to="/test" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

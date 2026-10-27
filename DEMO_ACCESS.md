@@ -7,6 +7,18 @@
 
 ---
 
+## Start here first
+
+| What | Link |
+|------|------|
+| **Test guide (do this first)** | https://fossil-triumph-harris-silence.trycloudflare.com/test |
+| Auto test API | https://fossil-triumph-harris-silence.trycloudflare.com/api/demo/test-all?run=1 |
+| Full written guide | `TESTING_GUIDE.md` |
+
+On **/test**: click **Run auto test**, then follow the numbered steps (Devis → Messagerie → Visite → Admin → CMS → n8n…).
+
+---
+
 ## Base URL (live now)
 
 **https://fossil-triumph-harris-silence.trycloudflare.com**
@@ -19,6 +31,7 @@
 
 | What | Link |
 |------|------|
+| **Test guide** | https://fossil-triumph-harris-silence.trycloudflare.com/test |
 | Site (home) | https://fossil-triumph-harris-silence.trycloudflare.com/ |
 | Devis (quote) | https://fossil-triumph-harris-silence.trycloudflare.com/devis |
 | Visite / Essai / Meet | https://fossil-triumph-harris-silence.trycloudflare.com/visite |

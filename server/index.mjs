@@ -138,6 +138,221 @@ app.get('/api/health', async (_req, res) => {
   })
 })
 
+/** Demo self-test: health + optional sample leads (messagerie mode). */
+async function runDemoTestAll({ runFlows = false } = {}) {
+  const checks = []
+  const push = (id, label, ok, detail, link) => {
+    checks.push({ id, label, ok: Boolean(ok), detail, link })
+  }
+
+  const db = await dbHealth()
+  const wa = whatsappStatus()
+  const n8n = n8nStatus()
+  push(
+    'health',
+    'API health',
+    true,
+    `mode=${wa.mode} · pdfDelayMs=${PDF_DELAY_MS}`,
+    `${PUBLIC_BASE_URL}/api/health`,
+  )
+  push(
+    'database',
+    'Postgres',
+    db.ok,
+    db.ok
+      ? `leads=${db.leads} clients=${db.clients} docs=${db.documents}`
+      : db.error || 'DB down',
+    `${PUBLIC_BASE_URL}/db/`,
+  )
+  push(
+    'whatsapp',
+    'Messaging channel',
+    true,
+    wa.tokenSet
+      ? 'Cloud API tokens set (live WhatsApp)'
+      : 'DEMO messagerie — tokens empty; later → real WhatsApp',
+    `${PUBLIC_BASE_URL}/messagerie?phone=99757218`,
+  )
+  push(
+    'n8n-config',
+    'n8n webhook base',
+    Boolean(n8n.webhookBase),
+    n8n.webhookBase || 'missing',
+    `${PUBLIC_BASE_URL}/n8n/`,
+  )
+
+  // Public page probes (same origin via PUBLIC_BASE_URL)
+  const pages = [
+    ['page-home', 'Home', '/'],
+    ['page-devis', 'Devis', '/devis'],
+    ['page-visite', 'Visite', '/visite'],
+    ['page-messagerie', 'Messagerie', '/messagerie'],
+    ['page-admin', 'Admin', '/admin'],
+    ['page-test', 'Test guide', '/test'],
+    ['page-cms', 'CMS', '/cms/admin/'],
+    ['page-n8n', 'n8n UI', '/n8n/'],
+  ]
+  for (const [id, label, pathName] of pages) {
+    try {
+      const res = await fetch(`${PUBLIC_BASE_URL}${pathName}`, {
+        redirect: 'follow',
+        signal: AbortSignal.timeout(12_000),
+      })
+      push(id, label, res.ok, `HTTP ${res.status}`, `${PUBLIC_BASE_URL}${pathName}`)
+    } catch (err) {
+      push(
+        id,
+        label,
+        false,
+        err instanceof Error ? err.message : 'fetch failed',
+        `${PUBLIC_BASE_URL}${pathName}`,
+      )
+    }
+  }
+
+  let sample = null
+  if (runFlows) {
+    const phone = '99757218'
+    const stamp = Date.now().toString().slice(-5)
+    try {
+      const devisRes = await fetch(`http://127.0.0.1:${PORT}/api/leads/devis`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: `Demo Test ${stamp}`,
+          telephone: phone,
+          modele: 'T8 PRO',
+          showroom: 'SHOWROOM CLH MOTORS',
+          besoin: 'Auto test devis',
+          couleurId: 'blanc',
+          optionIds: ['couvre-benne'],
+        }),
+      })
+      const devis = await devisRes.json()
+      push(
+        'flow-devis',
+        'Devis ACK + PDF',
+        devisRes.ok && devis.ok,
+        devis.ok
+          ? `ref=${devis.leadId} · pdf scheduled`
+          : devis.error || `HTTP ${devisRes.status}`,
+        devis.pdfUrl || `${PUBLIC_BASE_URL}/messagerie?phone=${phone}`,
+      )
+      sample = { devis }
+    } catch (err) {
+      push('flow-devis', 'Devis ACK + PDF', false, err instanceof Error ? err.message : 'fail')
+    }
+
+    try {
+      const tomorrow = new Date()
+      tomorrow.setDate(tomorrow.getDate() + 2)
+      const date = tomorrow.toISOString().slice(0, 10)
+      const visRes = await fetch(`http://127.0.0.1:${PORT}/api/leads/visite`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: `Demo Meet ${stamp}`,
+          telephone: phone,
+          modele: 'T8 PRO',
+          showroomId: 'clh',
+          showroomName: 'SHOWROOM CLH MOTORS',
+          date,
+          time: '10:00',
+          mode: 'meet',
+        }),
+      })
+      const vis = await visRes.json()
+      push(
+        'flow-visite',
+        'Visite Meet ACK',
+        visRes.ok && vis.ok,
+        vis.ok ? `ref=${vis.leadId} · meet=${vis.meetUrl || 'n/a'}` : vis.error || 'fail',
+        `${PUBLIC_BASE_URL}/messagerie?phone=${phone}`,
+      )
+    } catch (err) {
+      push('flow-visite', 'Visite Meet ACK', false, err instanceof Error ? err.message : 'fail')
+    }
+
+    try {
+      const intRes = await fetch(`http://127.0.0.1:${PORT}/api/leads/interest`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nom: `Demo 360 ${stamp}`,
+          telephone: phone,
+          modele: 'T8',
+          source: '360',
+        }),
+      })
+      const interest = await intRes.json()
+      push(
+        'flow-360',
+        '360 interest ACK',
+        intRes.ok && interest.ok,
+        interest.ok ? `ref=${interest.leadId}` : interest.error || 'fail',
+        `${PUBLIC_BASE_URL}/messagerie?phone=${phone}`,
+      )
+    } catch (err) {
+      push('flow-360', '360 interest ACK', false, err instanceof Error ? err.message : 'fail')
+    }
+
+    try {
+      const loginRes = await fetch(`http://127.0.0.1:${PORT}/api/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: 'admin@jacmotors.tn',
+          password: 'JacMotors2026!',
+        }),
+      })
+      const login = await loginRes.json()
+      push(
+        'admin-login',
+        'Admin login',
+        loginRes.ok && login.ok,
+        login.ok ? `role=${login.user?.role || 'admin'}` : login.error || 'fail',
+        `${PUBLIC_BASE_URL}/admin`,
+      )
+    } catch (err) {
+      push('admin-login', 'Admin login', false, err instanceof Error ? err.message : 'fail')
+    }
+  }
+
+  const ok = checks.every((c) => c.ok)
+  return {
+    ok,
+    demo: true,
+    baseUrl: PUBLIC_BASE_URL,
+    checkedAt: new Date().toISOString(),
+    checks,
+    sample,
+    messageriePhone: '99757218',
+    note: runFlows
+      ? 'DEMO auto test ran sample devis/visite/360 into JAC Messagerie. Later → real WhatsApp.'
+      : 'Readiness only (add ?run=1 or POST to create sample leads).',
+  }
+}
+
+app.get('/api/demo/test-all', async (req, res) => {
+  try {
+    const runFlows = String(req.query.run || '') === '1'
+    const report = await runDemoTestAll({ runFlows })
+    res.status(report.ok ? 200 : 503).json(report)
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Demo test failed')
+  }
+})
+
+app.post('/api/demo/test-all', async (req, res) => {
+  try {
+    const runFlows = String(req.query.run || '1') !== '0'
+    const report = await runDemoTestAll({ runFlows })
+    res.status(report.ok ? 200 : 503).json(report)
+  } catch (err) {
+    bad(res, 500, err instanceof Error ? err.message : 'Demo test failed')
+  }
+})
+
 async function requireAdmin(req, res, next) {
   try {
     const header = req.headers.authorization || ''

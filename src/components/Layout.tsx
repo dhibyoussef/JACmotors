@@ -55,6 +55,7 @@ export function Layout() {
       '/avis': 'Avis clients · JAC Tunisie',
       '/confidentialite': 'Confidentialité · JAC Tunisie',
       '/admin': 'Admin · JAC Tunisie',
+      '/test': 'Demo test guide · JAC Tunisie',
     }
     document.title = titles[location.pathname] ?? 'JAC Motors Tunisie'
   }, [location.pathname])
@@ -203,6 +204,9 @@ export function Layout() {
               </li>
               <li>
                 <NavLink to="/messagerie?phone=99757218">Messagerie démo</NavLink>
+              </li>
+              <li>
+                <NavLink to="/test">Guide test démo</NavLink>
               </li>
               <li>
                 <NavLink to="/admin">Espace admin</NavLink>
